@@ -7,3 +7,4 @@ lifelines>=0.29
 scikit-learn>=1.5
 numpy>=1.26
 pandas>=2.2
+polars>=1.42
