@@ -35,7 +35,7 @@ def build_sequences(payload: FleetSequenceRequest) -> FleetSequenceResponse:
         components = [
             ComponentSequence(
                 component_id=component,
-                sequence=build_sequence(group.pid, records, ),
+                sequence=build_sequence(group.pid, records, component),
             )
             for component in COMPONENTS
         ]
