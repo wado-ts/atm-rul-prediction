@@ -1,0 +1,7 @@
+{
+  "hidden_dim": 32,
+  "n_time_bins": 50,
+  "dropout": 0.2,
+  "max_len": 1000,
+  "n_features": 12
+}
