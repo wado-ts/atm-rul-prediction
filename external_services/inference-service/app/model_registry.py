@@ -1,27 +1,32 @@
 """
-Loads each component's trained model artifact once at service startup and
-keeps it in memory for reuse across requests - deserializing a model on
-every call would be far too slow.
-
-This registry is plumbing only: it doesn't care what kind of model each
-component uses (a lifelines CoxPHFitter, a scikit-learn IsolationForest,
-anything joblib-serializable), as long as each component's trained model
-is saved as a single file named per COMPONENT_*_MODEL_FILE in .env and
-sits under TRAINED_MODELS_DIR.
+Loads each component's trained DeepHit model at startup.
+Checkpoint is raw state dict; bin_edges loaded from separate .npy file.
+Architecture params from config JSON.
 """
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
-import joblib
+import numpy as np
+import torch
 
 from app.config import get_settings
+from app.model_architecture import DynamicDeepHit
 
 logger = logging.getLogger(__name__)
 
-_models: dict[str, Any] = {}
+_models: Dict[str, Dict[str, Any]] = {}
+
+COMPONENT_MAPPING = {
+    "CMD_CAS_1": "CMD_CAS_1",
+    "CMD_CAS_2": "CMD_CAS_2",
+    "CMD_CAS_3": "CMD_CAS_3",
+    "CMD_CAS_4": "CMD_CAS_4",
+    "RECE_PRINT": "RECE_PRINT",
+}
 
 
 def load_all_models() -> None:
@@ -29,30 +34,52 @@ def load_all_models() -> None:
     settings = get_settings()
     model_dir = Path(settings.trained_models_dir)
 
-    files = {
-        "component_1": settings.component_1_model_file,
-        "component_2": settings.component_2_model_file,
-        "component_3": settings.component_3_model_file,
-        "component_4": settings.component_4_model_file,
-        "component_5": settings.component_5_model_file,
-    }
+    for dispatch_id, component_id in COMPONENT_MAPPING.items():
+        checkpoint_path = model_dir / settings.deephit_model_pattern.format(component=component_id)
+        config_path = model_dir / "configs" / f"config_{component_id}.json"
+        bin_edges_path = model_dir / f"bin_edges_{component_id}.npy"
 
-    for component_id, filename in files.items():
-        path = model_dir / filename
         try:
-            _models[component_id] = joblib.load(path)
-            logger.info("Loaded model for %s from %s", component_id, path)
-        except FileNotFoundError:
-            _models[component_id] = None
-            logger.warning(
-                "No trained model file found for %s at %s - "
-                "predict() for that component will need to handle this",
-                component_id,
-                path,
+            # Load checkpoint (raw state dict)
+            state_dict = torch.load(checkpoint_path, map_location="cpu")
+
+            # Load architecture config from JSON
+            with open(config_path) as f:
+                arch_config = json.load(f)
+
+            model = DynamicDeepHit(
+                n_features=arch_config["n_features"],
+                hidden_dim=arch_config["hidden_dim"],
+                n_time_bins=arch_config["n_time_bins"],
+                dropout=arch_config["dropout"]
             )
+            model.load_state_dict(state_dict)
+            model.eval()
+
+            # Load bin_edges from separate .npy file
+            bin_edges = np.load(bin_edges_path) if bin_edges_path.exists() else None
+            if bin_edges is None:
+                logger.warning("Bin edges not found for %s at %s", component_id, bin_edges_path)
+
+            _models[dispatch_id] = {
+                "model": model,
+                "bin_edges": bin_edges,
+            }
+            logger.info("Loaded model for %s (%s) from %s", dispatch_id, component_id, checkpoint_path)
+
+        except FileNotFoundError as e:
+            _models[dispatch_id] = None
+            logger.warning("Missing artifact for %s: %s", dispatch_id, e)
+        except Exception as e:
+            _models[dispatch_id] = None
+            logger.error("Failed to load model for %s: %s", dispatch_id, e)
 
 
-def get_model(component_id: str) -> Any:
-    """Returns the loaded model object for a component, or None if it
-    wasn't found at startup (see load_all_models)."""
-    return _models.get(component_id)
+def get_model(component_id: str):
+    """dispatch_id -> model"""
+    return _models.get(component_id, {}).get("model")
+
+
+def get_bin_edges(component_id: str):
+    """dispatch_id -> bin_edges"""
+    return _models.get(component_id, {}).get("bin_edges")

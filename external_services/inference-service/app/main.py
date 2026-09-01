@@ -14,18 +14,18 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.components import component_1, component_2, component_3, component_4, component_5
+from app.components import cmd_cas_1, cmd_cas_2, cmd_cas_3, cmd_cas_4, rece_print
 from app.config import get_settings
 from app.model_registry import load_all_models
 from app.schemas import AtmInferenceRequest, AtmInferenceResponse, ComponentPredictionOut
 
 # component_id -> that component's predict(sequence) function
 _DISPATCH = {
-    "component_1": component_1.predict,
-    "component_2": component_2.predict,
-    "component_3": component_3.predict,
-    "component_4": component_4.predict,
-    "component_5": component_5.predict,
+    "CMD_CAS_1": cmd_cas_1.predict,
+    "CMD_CAS_2": cmd_cas_2.predict,
+    "CMD_CAS_3": cmd_cas_3.predict,
+    "CMD_CAS_4": cmd_cas_4.predict,
+    "RECE_PRINT": rece_print.predict,
 }
 
 

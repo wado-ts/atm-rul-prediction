@@ -43,6 +43,7 @@ class ComponentPredictionOut(BaseModel):
     predicted_rul_days: float | None = None
     risk_level: str = "unknown"
     confidence: float | None = None
+    confidence_entropy: float | None = None
     model_version: str | None = None
 
 
