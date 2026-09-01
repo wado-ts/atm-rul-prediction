@@ -20,7 +20,7 @@ from app.schemas import (
     FleetSequenceResponse,
 )
 
-app = FastAPI(title=get_settings().app_name)
+app = FastAPI(title=get_settings().app_name, max_request_size=50_000_000)
 
 COMPONENTS = ["CMD_CAS_1", "CMD_CAS_2", "CMD_CAS_3", "CMD_CAS_4", "RECE_PRINT"]
 

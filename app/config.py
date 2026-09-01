@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     #   NBRE_CAS_4, CMD_CAS_1, CMD_CAS_2, CMD_CAS_3, CMD_CAS_4, RECE_PRINT
     oracle_source_table: str = "CHANGE_ME_MONETARY_TABLE"
     # How many days back to pull on every run
-    lookback_days: int = 30
+    lookback_days: int = 60
 
     # ---- Component RUL / risk thresholds -----------------------------------
     # Applied per component: predicted_rul_days <= critical -> critical,

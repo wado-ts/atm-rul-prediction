@@ -3,3 +3,6 @@ uvicorn[standard]>=0.30
 pydantic>=2.7
 pydantic-settings>=2.3
 polars>=1.42
+numpy>=2.4
+pandas>=2.3
+scikit-learn>=1.9

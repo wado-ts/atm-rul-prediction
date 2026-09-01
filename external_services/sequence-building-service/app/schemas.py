@@ -20,7 +20,7 @@ class MonetaryRecord(BaseModel):
 
     pid: str
     query_date: datetime
-    version: str | None = None
+    version: int | str | None = None
     institution: str | None = None
     nbre_cas_1: int
     nbre_cas_2: int

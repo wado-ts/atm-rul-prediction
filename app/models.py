@@ -19,7 +19,7 @@ class MonetaryLogRecord(BaseModel):
 
     pid: str = Field(..., description="ATM identifier")
     query_date: datetime
-    version: str | None = None
+    version: int
     institution: str | None = None
     nbre_cas_1: int
     nbre_cas_2: int
@@ -66,7 +66,8 @@ class ComponentPrediction(BaseModel):
         None, description="Estimated remaining useful life for this component, in days"
     )
     risk_level: RiskLevel = RiskLevel.UNKNOWN
-    confidence: float | None = Field(None, description="Model confidence/score, 0-1")
+    confidence: float | None = Field(None, description="Model confidence/score (1 - survival_tail), 0-1")
+    confidence_entropy: float | None = Field(None, description="Model confidence (1 - normalized entropy), 0-1")
     model_version: str | None = None
 
 

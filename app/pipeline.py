@@ -122,16 +122,16 @@ async def run_pipeline(triggered_by: str = "manual") -> FleetPredictionResult:
         # 1. Fetch last month of monetary-server data, grouped by PID.
         pid_groups = fetch_last_month_data_grouped_by_pid()
 
-        if not pid_groups:
-            logger.info("No DB records returned; using synthesized fleet predictions for demonstration.")
-            synthesized = _generate_synthesized_predictions()
-            result.fleet_size = len(synthesized)
-            result.predictions = synthesized
-            result.status = "success"
-            result.completed_at = datetime.utcnow()
-            prediction_store.set_current_run(result)
-            prediction_store.push_history(result)
-            return result
+        # if not pid_groups:
+        #     logger.info("No DB records returned; using synthesized fleet predictions for demonstration.")
+        #     synthesized = _generate_synthesized_predictions()
+        #     result.fleet_size = len(synthesized)
+        #     result.predictions = synthesized
+        #     result.status = "success"
+        #     result.completed_at = datetime.utcnow()
+        #     prediction_store.set_current_run(result)
+        #     prediction_store.push_history(result)
+        #     return result
 
         last_query_dates = {group.pid: _latest_query_date(group) for group in pid_groups}
 

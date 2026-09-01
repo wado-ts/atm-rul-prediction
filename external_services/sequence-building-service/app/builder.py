@@ -7,6 +7,7 @@ downstream inference model expects.
 """
 from __future__ import annotations
 
+import json
 import pickle
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,17 @@ settings = get_settings()
 MAX_DUR_MINUTES: float = 43200.0  # 30 days * 24h * 60min (lookback_days=30)
 MAX_LEN: int = 500
 SCALERS_DIR: Path = settings.scalers_path
+
+# Load one-hot encoding categories from training
+CATEGORIES_PATH: Path = settings.categories_path
+with open(CATEGORIES_PATH) as f:
+    CATEGORIES = json.load(f)
+
+# Map JSON keys to DataFrame column names
+CATEGORY_COLUMN_MAP = {
+    "instit": "INSTITUTION",
+    "version": "VERSION",
+}
 
 
 def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> dict[str, Any]:
@@ -46,7 +58,10 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
         X shape: [1, MAX_LEN, n_features], mask shape: [1, MAX_LEN]
     """
     # 1. Records -> DataFrame (lowercase -> UPPERCASE for notebook compatibility)
+    target_cols = ["CMD_CAS_1", "CMD_CAS_2", "CMD_CAS_3", "CMD_CAS_4", "RECE_PRINT"]
+
     df = pl.DataFrame(records).rename({
+        "pid": "PID",
         "query_date": "QUERY_DATE",
         "institution": "INSTITUTION",
         "version": "VERSION",
@@ -61,6 +76,12 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
         "rece_print": "RECE_PRINT",
     })
 
+    cols_to_drop = [c for c in target_cols if c != component]
+
+    df = df.with_columns(pl.col("QUERY_DATE").cast(pl.Datetime)).rename({component: "target_col"})
+    df = df.drop(cols_to_drop)
+    df = df.with_columns(pl.col("VERSION").cast(pl.Utf8))
+
     # 2. EDA oracle preprocessing
     df = clean_noise(df)
     episodes_df = create_timesteps(df, time_col="QUERY_DATE")
@@ -70,6 +91,7 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
     timesteps_df = remove_null_dates(timesteps_df)
     timesteps_df = compute_bill_diff(timesteps_df)
     timesteps_df = onehot_encode(timesteps_df, ["INSTITUTION", "VERSION"])
+    print(timesteps_df)
 
     # 4. Prepare sequences (filter by MAX_DUR/MAX_LEN, add timestep/idx)
     sequences_df = prepare_sequences(timesteps_df, episodes_df, MAX_DUR_MINUTES, MAX_LEN)
@@ -183,17 +205,27 @@ def compute_bill_diff(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def onehot_encode(df: pl.DataFrame, columns: list[str]) -> pl.DataFrame:
-    """One-hot encode categorical columns."""
+    """One-hot encode categorical columns using predefined categories from training."""
     encoded_df = df.clone()
     for column in columns:
-        categories = encoded_df.select(pl.col(column).unique()).get_column(column).to_list()
+        # Get predefined categories for this column from training
+        json_key = next((k for k, v in CATEGORY_COLUMN_MAP.items() if v == column), None)
+        if json_key is None:
+            # Fallback: derive from data (should not happen in production)
+            categories = encoded_df.select(pl.col(column).unique()).get_column(column).to_list()
+        else:
+            categories = CATEGORIES.get(json_key, [])
 
+        # Ensure column is string type for consistent comparison
+        encoded_df = encoded_df.with_columns(pl.col(column).cast(pl.Utf8))
+
+        # Create one-hot columns for ALL predefined categories
         one_hot_exprs = [
-            (pl.col(column) == category).cast(pl.Int8).alias(f"{column}_{category}")
-            for category in categories
+            (pl.col(column) == cat).cast(pl.Int8).alias(f"{column}_{cat}")
+            for cat in categories
         ]
-
         encoded_df = encoded_df.with_columns(one_hot_exprs)
+
     encoded_df = encoded_df.drop(columns)
     return encoded_df
 
@@ -219,7 +251,7 @@ def remove_null_dates(df: pl.DataFrame) -> pl.DataFrame:
     """Fill null end_time with start_time + 15 minutes."""
     return df.with_columns(
         end_time=pl.col("end_time").fill_null(
-            pl.col("start_time").str.to_datetime() + pl.duration(minutes=15)
+            pl.col("start_time") + pl.duration(minutes=15)
         )
     )
 
@@ -245,10 +277,10 @@ def prepare_sequences(
         .with_row_index("idx")
     )
 
-    # 2. Calculate absolute end times for MAX_DUR filtering
+# 2. Calculate absolute end times for MAX_DUR filtering
     ep_end = (
         episodes_df
-        .with_columns(ts_dt=pl.col("timestamp").str.to_datetime())
+        .with_columns(ts_dt=pl.col("timestamp"))
         .with_columns(
             end_dt=pl.col("ts_dt") + pl.duration(minutes=pl.col("duration"))
         )
@@ -258,7 +290,7 @@ def prepare_sequences(
     # 3. Join, Truncate, and Index
     sequences_df = (
         timesteps_df
-        .with_columns(start_dt=pl.col("start_time").str.to_datetime())
+        .with_columns(start_dt=pl.col("start_time"))
         .join(ep_end, on=["PID", "seq_id"], how="left")
 
         # STAGE 1: Duration threshold (Keep events within MAX_DUR from the end)

@@ -53,9 +53,9 @@ function showBanner(text, isError = false) {
   runSpinner.style.display = isError ? "none" : "block";
 }
 
-function hideBanner() {
-  runBanner.classList.remove("visible");
-}
+// function hideBanner() {
+//   runBanner.classList.remove("visible");
+// }
 
 function renderStats(predictions) {
   const counts = { critical: 0, warning: 0, healthy: 0 };
@@ -149,7 +149,7 @@ function renderRun(run) {
     return;
   }
 
-  const statusLabel = { success: "Last run succeeded", failed: "Last run failed", pending: "Run in progress" };
+  const statusLabel = { success: "Last run successful", failed: "Last run failed", pending: "Run in progress" };
   lastRunStatus.textContent = statusLabel[run.status] || run.status;
   lastRunTime.textContent = `${fmtDate(run.completed_at || run.started_at)} · ${run.triggered_by}`;
 
