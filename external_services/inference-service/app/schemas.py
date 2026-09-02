@@ -11,6 +11,7 @@ service is called ONCE PER ATM.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -22,6 +23,7 @@ class ComponentSequenceIn(BaseModel):
 
     component_id: str
     sequence: Any = Field(..., description="Model-ready sequence for this component")
+    episode_start_timestamp: datetime | None = None
 
 
 class AtmInferenceRequest(BaseModel):
@@ -44,6 +46,7 @@ class ComponentPredictionOut(BaseModel):
     risk_level: str = "unknown"
     confidence: float | None = None
     confidence_entropy: float | None = None
+    overdue: bool | None = None
     model_version: str | None = None
 
 
