@@ -14,6 +14,8 @@ const RISK_LABEL = { critical: "Critical", warning: "Warning", healthy: "Healthy
 // Reference ceiling (days) used only to scale gauge fill width - not a
 // business threshold, just a visual range so the bar has room to breathe.
 const GAUGE_MAX_DAYS = 30;
+const POLL_INTERVAL_MS = 5000;
+let pollTimer = null;
 
 function fmtDate(iso) {
   if (!iso) return "—";
@@ -27,12 +29,31 @@ function fmtDate(iso) {
   });
 }
 
-function fmtRul(days) {
-  return days == null ? "—" : `${days.toFixed(1)} d`;
+function fmtRul(days, overdue = false) {
+  if (days == null) return "—";
+  
+  const totalMinutes = Math.max(0, Math.round(days * 24 * 60));
+  const wholeDays = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (overdue) {
+    return `<div>${wholeDays} days ${hours} hours ${minutes} minutes</div><span class="badge overdue">OVERDUE</span>`;
+  }
+
+  return `${wholeDays} days ${hours} hours ${minutes} minutes`;
 }
 
 function riskLabel(level) {
   return RISK_LABEL[level] || "Unknown";
+}
+
+function confidenceLabel(conf) {
+  if (conf == null) return "—";
+  const pct = Math.round(conf * 100);
+  if (conf > 0.7) return `<span class="confidence-high">${pct}%</span>`;
+  if (conf > 0.4) return `<span class="confidence-medium">${pct}%</span>`;
+  return `<span class="confidence-low">${pct}%</span>`;
 }
 
 function gaugeFillPct(days) {
@@ -53,9 +74,19 @@ function showBanner(text, isError = false) {
   runSpinner.style.display = isError ? "none" : "block";
 }
 
-// function hideBanner() {
-//   runBanner.classList.remove("visible");
-// }
+function hideBanner() {
+  runBanner.classList.remove("visible");
+}
+
+function schedulePoll(run) {
+  if (pollTimer) {
+    clearTimeout(pollTimer);
+    pollTimer = null;
+  }
+  if (run?.status === "pending") {
+    pollTimer = setTimeout(fetchLatest, POLL_INTERVAL_MS);
+  }
+}
 
 function renderStats(predictions) {
   const counts = { critical: 0, warning: 0, healthy: 0 };
@@ -71,7 +102,7 @@ function renderStats(predictions) {
 function buildDetailPanel(components) {
   const head = `
     <div class="detail-head">
-      <div>Component</div><div>RUL</div><div>Risk</div><div>Gauge</div>
+      <div>Component</div><div>RUL</div><div>Risk</div><div>Confidence</div><div>Gauge</div>
     </div>
   `;
   const items = components
@@ -79,9 +110,16 @@ function buildDetailPanel(components) {
       (c) => `
         <div class="detail-item">
           <div class="component-name">${c.component_id}</div>
-          <div>${fmtRul(c.predicted_rul_days)}</div>
+          <div>${fmtRul(c.predicted_rul_days, c.overdue)}</div>
           <div><span class="badge ${c.risk_level}">${riskLabel(c.risk_level)}</span></div>
-          <div class="gauge"><div class="gauge-fill" style="width:${gaugeFillPct(c.predicted_rul_days)}%"></div></div>
+          <div class="confidence-cell">
+            <div class="confidence-row"><span class="confidence-label">Survival:</span> ${confidenceLabel(c.confidence)}</div>
+            <div class="confidence-row"><span class="confidence-label">Entropy:</span> ${confidenceLabel(c.confidence_entropy)}</div>
+          </div>
+          <div class="gauge">
+            <div class="gauge-fill" style="width:${gaugeFillPct(c.predicted_rul_days)}%"></div>
+            ${c.overdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
+          </div>
         </div>
       `
     )
@@ -163,6 +201,7 @@ function renderRun(run) {
 
   renderTable(run.predictions || []);
   renderStats(run.predictions || []);
+  schedulePoll(run);
 }
 
 async function fetchLatest() {
@@ -173,6 +212,7 @@ async function fetchLatest() {
     renderRun(run);
   } catch (err) {
     console.error("Failed to fetch latest prediction", err);
+    pollTimer = setTimeout(fetchLatest, POLL_INTERVAL_MS);
   }
 }
 

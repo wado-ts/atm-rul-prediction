@@ -742,9 +742,128 @@ table.fleet tbody tr:last-child td {
   padding-left: 8px;
 }
 
-/* ---------------------------------------------------------------
+/* ============================================================
+   Confidence labels & Overdue badge
+   ============================================================ */
+.confidence-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.confidence-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.confidence-label {
+  color: var(--grey);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 65px;
+}
+
+.confidence-high { color: var(--risk-healthy-text); font-weight: 600; }
+.confidence-medium { color: var(--risk-warning-text); font-weight: 600; }
+.confidence-low { color: var(--risk-critical-text); font-weight: 600; }
+
+.overdue-badge {
+  display: inline-block;
+  background: var(--risk-critical-border);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(198, 40, 40, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.badge.overdue {
+  background: linear-gradient(135deg, #fff, var(--risk-critical-bg));
+  color: var(--risk-critical-text);
+  border-color: rgba(198, 40, 40, 0.2);
+}
+.badge.overdue::before { background: var(--risk-critical-border); }
+
+.gauge {
+  position: relative;
+  width: 140px;
+  height: 10px;
+  background: rgba(221, 215, 205, 0.4);
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.confidence-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.confidence-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.confidence-label {
+  color: var(--grey);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 65px;
+}
+
+.confidence-high { color: var(--risk-healthy-text); font-weight: 600; }
+.confidence-medium { color: var(--risk-warning-text); font-weight: 600; }
+.confidence-low { color: var(--risk-critical-text); font-weight: 600; }
+
+.overdue-badge {
+  display: inline-block;
+  background: var(--risk-critical-border);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(198, 40, 40, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.badge.overdue {
+  background: linear-gradient(135deg, #fff, var(--risk-critical-bg));
+  color: var(--risk-critical-text);
+  border-color: rgba(198, 40, 40, 0.2);
+}
+.badge.overdue::before { background: var(--risk-critical-border); }
+
+/* ============================================================
    Empty state
-   --------------------------------------------------------------- */
+   ============================================================ */
 .empty-state {
   text-align: center;
   padding: 80px 32px;

@@ -1,7 +1,6 @@
 """
 Loads each component's trained DeepHit model at startup.
-Checkpoint is raw state dict; bin_edges loaded from separate .npy file.
-Architecture params from config JSON.
+Each checkpoint contains model_state + bin_edges. Architecture params from config JSON.
 """
 from __future__ import annotations
 
@@ -10,7 +9,6 @@ import logging
 from pathlib import Path
 from typing import Any, Dict
 
-import numpy as np
 import torch
 
 from app.config import get_settings
@@ -37,11 +35,10 @@ def load_all_models() -> None:
     for dispatch_id, component_id in COMPONENT_MAPPING.items():
         checkpoint_path = model_dir / settings.deephit_model_pattern.format(component=component_id)
         config_path = model_dir / "configs" / f"config_{component_id}.json"
-        bin_edges_path = model_dir / f"bin_edges_{component_id}.npy"
 
         try:
-            # Load checkpoint (raw state dict)
-            state_dict = torch.load(checkpoint_path, map_location="cpu")
+            # Load checkpoint (model_state + bin_edges)
+            checkpoint = torch.load(checkpoint_path, map_location="cpu")
 
             # Load architecture config from JSON
             with open(config_path) as f:
@@ -53,17 +50,12 @@ def load_all_models() -> None:
                 n_time_bins=arch_config["n_time_bins"],
                 dropout=arch_config["dropout"]
             )
-            model.load_state_dict(state_dict)
+            model.load_state_dict(checkpoint)
             model.eval()
-
-            # Load bin_edges from separate .npy file
-            bin_edges = np.load(bin_edges_path) if bin_edges_path.exists() else None
-            if bin_edges is None:
-                logger.warning("Bin edges not found for %s at %s", component_id, bin_edges_path)
 
             _models[dispatch_id] = {
                 "model": model,
-                "bin_edges": bin_edges,
+                "bin_edges": checkpoint["bin_edges"],
             }
             logger.info("Loaded model for %s (%s) from %s", dispatch_id, component_id, checkpoint_path)
 

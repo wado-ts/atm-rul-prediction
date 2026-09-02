@@ -99,12 +99,17 @@ def fetch_last_month_data_grouped_by_pid(
     lookback_days: int | None = None,
 ) -> list[PidLogGroup]:
     """Fetch the last `lookback_days` (default: settings.lookback_days) of
-    monetary-server snapshots from Oracle and group the rows by PID.
+    monetary-server snapshots from the configured source and group by PID.
 
     Returns a list of PidLogGroup, one per distinct ATM seen in the window -
     exactly the shape the sequence-building service expects as input.
     """
     settings = get_settings()
+    if settings.data_source == "csv":
+        from app.csv_loader import fetch_from_csv_grouped_by_pid
+
+        return fetch_from_csv_grouped_by_pid(lookback_days)
+
     days = lookback_days if lookback_days is not None else settings.lookback_days
     window_start = datetime.utcnow() - timedelta(days=days)
 

@@ -120,7 +120,7 @@ async def run_pipeline(triggered_by: str = "manual") -> FleetPredictionResult:
 
     try:
         # 1. Fetch last month of monetary-server data, grouped by PID.
-        pid_groups = fetch_last_month_data_grouped_by_pid()
+        pid_groups = await asyncio.to_thread(fetch_last_month_data_grouped_by_pid)
 
         # if not pid_groups:
         #     logger.info("No DB records returned; using synthesized fleet predictions for demonstration.")
@@ -150,6 +150,7 @@ async def run_pipeline(triggered_by: str = "manual") -> FleetPredictionResult:
         )
 
         result.predictions = list(atm_predictions)
+        result.fleet_size = len(result.predictions)
         result.status = "success"
 
     except Exception as exc:  # noqa: BLE001 - surface any failure to the UI

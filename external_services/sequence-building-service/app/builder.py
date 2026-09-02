@@ -91,7 +91,6 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
     timesteps_df = remove_null_dates(timesteps_df)
     timesteps_df = compute_bill_diff(timesteps_df)
     timesteps_df = onehot_encode(timesteps_df, ["INSTITUTION", "VERSION"])
-    print(timesteps_df)
 
     # 4. Prepare sequences (filter by MAX_DUR/MAX_LEN, add timestep/idx)
     sequences_df = prepare_sequences(timesteps_df, episodes_df, MAX_DUR_MINUTES, MAX_LEN)
@@ -110,11 +109,21 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
         n_features = X.shape[2]
         return {
             "X": np.zeros((1, MAX_LEN, n_features), dtype=np.float32).tolist(),
-            "mask": np.zeros((1, MAX_LEN), dtype=np.float32).tolist()
+            "mask": np.zeros((1, MAX_LEN), dtype=np.float32).tolist(),
+            "episode_start_timestamp": None
         }
 
     idx = pid_indices[0]
-    return {"X": X[idx:idx+1].tolist(), "mask": mask[idx:idx+1].tolist()}
+    
+    # Get episode start timestamp from episodes_df for this PID
+    episode_timestamp = episodes_df.filter(pl.col("PID") == pid)["timestamp"].head(1)
+    episode_start_timestamp = episode_timestamp[0] if len(episode_timestamp) > 0 else None
+    
+    return {
+        "X": X[idx:idx+1].tolist(),
+        "mask": mask[idx:idx+1].tolist(),
+        "episode_start_timestamp": episode_start_timestamp
+    }
 
 
 def clean_noise(df: pl.DataFrame):
