@@ -7,7 +7,7 @@ code runs unchanged across dev/staging/prod. See .env.example for the full
 list of variables and sane local defaults.
 """
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -34,12 +34,14 @@ class Settings(BaseSettings):
     #   NBRE_CAS_4, CMD_CAS_1, CMD_CAS_2, CMD_CAS_3, CMD_CAS_4, RECE_PRINT
     oracle_source_table: str = "CHANGE_ME_MONETARY_TABLE"
     # How many days back to pull on every run
-    lookback_days: int = 60
+    lookback_days: int = 30
 
     # ---- Data source --------------------------------------------------------
     # Use "csv" for local/testing runs that should bypass Oracle entirely.
     data_source: Literal["oracle", "csv"] = "oracle"
     csv_path: str = "data/monetary_data.csv"
+    # Optional fixed reference time for testing (ISO format). If not set, uses datetime.utcnow()
+    csv_reference_time: Optional[str] = None
 
     # ---- Component RUL / risk thresholds -----------------------------------
     # Applied per component: predicted_rul_days <= critical -> critical,

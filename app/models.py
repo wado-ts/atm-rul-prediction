@@ -68,6 +68,7 @@ class ComponentPrediction(BaseModel):
     risk_level: RiskLevel = RiskLevel.UNKNOWN
     confidence: float | None = Field(None, description="Model confidence/score (1 - survival_tail), 0-1")
     confidence_entropy: float | None = Field(None, description="Model confidence (1 - normalized entropy), 0-1")
+    overdue: bool | None = None
     model_version: str | None = None
 
 

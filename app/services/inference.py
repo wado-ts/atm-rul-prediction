@@ -74,6 +74,8 @@ async def predict_rul_for_atm(
                     predicted_rul_days=item.get("predicted_rul_days"),
                     risk_level=RiskLevel(item.get("risk_level", "unknown")),
                     confidence=item.get("confidence"),
+                    confidence_entropy=item.get("confidence_entropy"),
+                    overdue=item.get("overdue"),
                     model_version=item.get("model_version"),
                 )
             )
