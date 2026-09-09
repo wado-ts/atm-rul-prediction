@@ -13,10 +13,11 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 from app.components import cmd_cas_1, cmd_cas_2, cmd_cas_3, cmd_cas_4, rece_print
 from app.config import get_settings
-from app.model_registry import load_all_models
+from app.model_registry import get_model_status, is_ready, load_all_models
 from app.schemas import AtmInferenceRequest, AtmInferenceResponse, ComponentPredictionOut
 
 # component_id -> that component's predict(sequence) function
@@ -55,3 +56,14 @@ def predict_rul(payload: AtmInferenceRequest) -> AtmInferenceResponse:
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/readyz")
+def readyz() -> JSONResponse:
+    status = get_model_status()
+    if not is_ready():
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_ready", "models": status},
+        )
+    return JSONResponse(status_code=200, content={"status": "ready", "models": status})

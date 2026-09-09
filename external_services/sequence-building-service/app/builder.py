@@ -46,15 +46,16 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
             window, sorted ascending by query_date, each shaped like:
             {
                 "pid": str, "query_date": iso-datetime, "version": str | None,
-                "institution": str | None, "nbre_cas_1": int, "nbre_cas_2": int,
-                "nbre3": int, "nbre_cas_4": int, "cmd_cas_1": int | None,
-                "cmd_cas_2": int | None, "cmd_cas_3": int | None,
+                "institution": str | None, "address": str | None,
+                "nbre_cas_1": int, "nbre_cas_2": int, "nbre3": int, "nbre_cas_4": int,
+                "cmd_cas_1": int | None, "cmd_cas_2": int | None, "cmd_cas_3": int | None,
                 "cmd_cas_4": int | None, "rece_print": int | None
             }
         component: one of "CMD_CAS_1", "CMD_CAS_2", "CMD_CAS_3", "CMD_CAS_4", "RECE_PRINT"
 
     Output:
-        {"X": list[list[list[float]]], "mask": list[list[float]]}
+        {"X": list[list[list[float]]], "mask": list[list[float]], "episode_start_timestamp": str | None, 
+         "institution_code": str | None, "address": str | None}
         X shape: [1, MAX_LEN, n_features], mask shape: [1, MAX_LEN]
     """
     # 1. Records -> DataFrame (lowercase -> UPPERCASE for notebook compatibility)
@@ -64,6 +65,7 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
         "pid": "PID",
         "query_date": "QUERY_DATE",
         "institution": "INSTITUTION",
+        "address": "ADDRESS",
         "version": "VERSION",
         "nbre_cas_1": "NBRE_CAS_1",
         "nbre_cas_2": "NBRE_CAS_2",
@@ -110,7 +112,9 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
         return {
             "X": np.zeros((1, MAX_LEN, n_features), dtype=np.float32).tolist(),
             "mask": np.zeros((1, MAX_LEN), dtype=np.float32).tolist(),
-            "episode_start_timestamp": None
+            "episode_start_timestamp": None,
+            "institution_code": None,
+            "address": None
         }
 
     idx = pid_indices[0]
@@ -119,10 +123,17 @@ def build_sequence(pid: str, records: list[dict[str, Any]], component: str) -> d
     episode_timestamp = episodes_df.filter(pl.col("PID") == pid)["timestamp"].head(1)
     episode_start_timestamp = episode_timestamp[0] if len(episode_timestamp) > 0 else None
     
+    # Get institution_code and address from the first record of this PID
+    first_record = records[0] if records else {}
+    institution_code = first_record.get("institution")
+    address = first_record.get("address")
+    
     return {
         "X": X[idx:idx+1].tolist(),
         "mask": mask[idx:idx+1].tolist(),
-        "episode_start_timestamp": episode_start_timestamp
+        "episode_start_timestamp": episode_start_timestamp,
+        "institution_code": institution_code,
+        "address": address
     }
 
 
@@ -267,7 +278,7 @@ def remove_null_dates(df: pl.DataFrame) -> pl.DataFrame:
 
 def get_feature_cols(timesteps_df: pl.DataFrame) -> list[str]:
     """Extract feature columns, excluding metadata columns."""
-    return [c for c in timesteps_df.columns if c not in ("PID", "seq_id", "start_time", "end_time", "Event", "target_col")]
+    return [c for c in timesteps_df.columns if c not in ("PID", "seq_id", "start_time", "end_time", "Event", "target_col", "ADDRESS")]
 
 
 def prepare_sequences(

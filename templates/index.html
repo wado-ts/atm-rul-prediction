@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.state.locale or 'fr' }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/static/css/style.css?v=3" />
+  <link rel="stylesheet" href="/static/css/style.css?v=4" />
 </head>
 <body>
   <header class="site-header">
@@ -18,84 +18,175 @@
       <div class="brand">
         <img src="/static/img/logo.jpeg" alt="Intelligentsia logo" />
         <div class="brand-text">
-          <h1>ATM Predictive Maintenance</h1>
-          <span>Fleet Remaining-Useful-Life Monitor</span>
+          <h1 data-i18n="app.name">ATM Predictive Maintenance</h1>
+          <span data-i18n="app.subtitle">Fleet Remaining-Useful-Life Monitor</span>
         </div>
       </div>
       <div class="header-meta">
+        {% include 'partials/lang_switcher.html' %}
         <div class="last-run" id="last-run-block">
           <strong id="last-run-status">No run yet</strong>
           <span id="last-run-time">—</span>
         </div>
-        <button class="btn btn-primary" id="run-now-btn">Run prediction now</button>
+        <button class="btn btn-primary" id="run-now-btn" data-i18n="dashboard.runNow">Run prediction now</button>
+        <form method="post" action="/auth/logout" style="margin: 0;">
+          <button type="submit" class="btn btn-secondary" id="logout-btn" data-i18n="dashboard.logout">Logout</button>
+        </form>
       </div>
     </div>
   </header>
 
   <main>
     <div class="run-banner" id="run-banner">
-      <div class="spinner" id="run-spinner"></div>
-      <span id="run-banner-text">Running prediction pipeline…</span>
+      <div style="display: flex; align-items: center;">
+        <div class="spinner" id="run-spinner"></div>
+        <span id="run-banner-text" data-i18n="dashboard.runningPipeline">Running prediction pipeline…</span>
+      </div>
+      <button id="close-banner-btn" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem; padding: 0 10px;" aria-label="Close banner">✕</button>
     </div>
 
     <section class="stat-row" id="stat-row">
-      <div class="stat-card">
-        <div class="label">Fleet size</div>
+      <div class="stat-card" data-risk="critical">
+        <div class="label" data-i18n="dashboard.fleetSizeLabel">Fleet size</div>
         <div class="value" id="stat-fleet">—</div>
       </div>
-      <div class="stat-card">
-        <div class="label">Critical</div>
+      <div class="stat-card" data-risk="critical">
+        <div class="label" data-i18n="dashboard.critical">Critical</div>
         <div class="value risk-text-critical" id="stat-critical">—</div>
       </div>
-      <div class="stat-card">
-        <div class="label">Warning</div>
+      <div class="stat-card" data-risk="warning">
+        <div class="label" data-i18n="dashboard.warning">Warning</div>
         <div class="value risk-text-warning" id="stat-warning">—</div>
       </div>
-      <div class="stat-card">
-        <div class="label">Healthy</div>
+      <div class="stat-card" data-risk="healthy">
+        <div class="label" data-i18n="dashboard.healthy">Healthy</div>
         <div class="value risk-text-healthy" id="stat-healthy">—</div>
+      </div>
+    </section>
+
+    <section class="filter-bar" id="filter-bar">
+      <div class="filter-group search-group">
+        <label for="search-input" class="visually-hidden" data-i18n="filters.search">Search ATM</label>
+        <div class="search-wrapper">
+          <input 
+            type="search" 
+            id="search-input" 
+            placeholder="Search by ATM name..."
+            data-i18n-placeholder="filters.searchPlaceholder"
+            data-collapsed-placeholder="Search by ATM name..."
+            data-expanded-placeholder="Search ATM by PID, name, address, institution..."
+            autocomplete="off"
+            aria-label="Search ATM by name"
+            class="collapsed"
+          >
+          <button type="button" class="search-clear" id="search-clear" hidden aria-label="Clear search">✕</button>
+          <span class="search-icon" aria-hidden="true">🔍</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="institution-filter" data-i18n="filters.institution">Institution</label>
+        <div class="select-wrapper">
+          <select id="institution-filter" aria-label="Filter by institution">
+            <option value="" data-i18n="filters.allInstitutions">All Institutions</option>
+            <!-- Populated dynamically -->
+          </select>
+          <span class="select-arrow" aria-hidden="true">▼</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="risk-filter" data-i18n="filters.riskLevel">Risk Level</label>
+        <div class="select-wrapper">
+          <select id="risk-filter" aria-label="Filter by risk level">
+            <option value="" data-i18n="filters.allRiskLevels">All Risk Levels</option>
+            <option value="critical" data-i18n="dashboard.critical">Critical</option>
+            <option value="warning" data-i18n="dashboard.warning">Warning</option>
+            <option value="healthy" data-i18n="dashboard.healthy">Healthy</option>
+          </select>
+          <span class="select-arrow" aria-hidden="true">▼</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="page-size" data-i18n="filters.pageSize">Page Size</label>
+        <div class="select-wrapper">
+          <select id="page-size" aria-label="Results per page">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <span class="select-arrow" aria-hidden="true">▼</span>
+        </div>
+      </div>
+
+      <div class="active-filters" id="active-filters" hidden>
+        <span class="filter-tag" data-filter="institution" hidden>
+          <span data-i18n="filters.institution">Institution</span>: <span></span> 
+          <button class="filter-remove" aria-label="Remove institution filter" type="button">✕</button>
+        </span>
+        <span class="filter-tag" data-filter="risk" hidden>
+          <span data-i18n="filters.risk">Risk</span>: <span></span> 
+          <button class="filter-remove" aria-label="Remove risk filter" type="button">✕</button>
+        </span>
+        <span class="filter-tag" data-filter="search" hidden>
+          <span data-i18n="filters.search">Search</span>: <span></span> 
+          <button class="filter-remove" aria-label="Remove search filter" type="button">✕</button>
+        </span>
+        <button class="btn btn-secondary" id="clear-all-filters" type="button" data-i18n="filters.clearAll">Clear all</button>
       </div>
     </section>
 
     <section>
       <div class="section-title">
-        <h2>Risk-ranked fleet</h2>
-        <span class="sub">sorted by overall risk, then RUL</span>
+        <h2 data-i18n="dashboard.riskRankedFleet">Risk-ranked fleet</h2>
+        <span class="sub" data-i18n="dashboard.sortedByRisk">sorted by overall risk, then RUL</span>
       </div>
 
       <div class="risk-legend">
-        <span>Risk scale</span>
+        <span data-i18n="dashboard.riskScale">Risk scale</span>
         <div class="risk-legend-bar"></div>
-        <span>healthy&nbsp;&rarr;&nbsp;critical</span>
+        <span data-i18n="dashboard.healthyToCritical">healthy&nbsp;&rarr;&nbsp;critical</span>
       </div>
 
       <div id="table-wrap">
         <div class="empty-state" id="empty-state">
-          <h3>No predictions yet</h3>
+          <h3 data-i18n="dashboard.noPredictionsYet">No predictions yet</h3>
           <p>
-            The pipeline runs automatically every day at
-            {{ "%02d:%02d"|format(daily_run_hour, daily_run_minute) }}, pulling the last
-            {{ lookback_days }} days of ATM data. You can also trigger a run right now.
+            <span data-i18n="dashboard.pipelineRunsDaily">The pipeline runs automatically every day at</span>
+            {{ "%02d:%02d"|format(daily_run_hour, daily_run_minute) }}, <span data-i18n="dashboard.pullingLastDays">pulling the last</span>
+            {{ lookback_days }} <span data-i18n="dashboard.daysOfAtmData">days of ATM data. You can also trigger a run right now.</span>
           </p>
-          <button class="btn btn-primary" id="empty-run-btn">Run prediction now</button>
+          <button class="btn btn-primary" id="empty-run-btn" data-i18n="dashboard.runNow">Run prediction now</button>
         </div>
 
         <table class="fleet" id="fleet-table" style="display: none">
           <thead>
             <tr>
               <th></th>
-              <th>ATM (PID)</th>
-              <th>Overall risk</th>
-              <th>Weakest component</th>
-              <th>RUL</th>
+              <th data-i18n="dashboard.atmPid">ATM (PID)</th>
+              <th data-i18n="dashboard.institution">Institution</th>
+              <th data-i18n="dashboard.atmName">ATM Name</th>
+              <th data-i18n="dashboard.overallRisk">Overall risk</th>
+              <th data-i18n="dashboard.weakestComponent">Weakest component</th>
+              <th data-i18n="dashboard.rul">RUL</th>
             </tr>
           </thead>
           <tbody id="fleet-tbody"></tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination" hidden>
+        <button class="btn btn-secondary" id="prev-page" disabled aria-label="Previous page" data-i18n="dashboard.prev">← Prev</button>
+        <span class="page-info" id="page-info" data-i18n="dashboard.pageOf">Page 1 of 1</span>
+        <button class="btn btn-secondary" id="next-page" disabled aria-label="Next page" data-i18n="dashboard.next">Next →</button>
+      </div>
     </section>
   </main>
 
+  <script src="/static/js/i18n.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

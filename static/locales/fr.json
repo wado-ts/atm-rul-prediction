@@ -1,0 +1,146 @@
+{
+  "app": {
+    "name": "Maintenance Prédictive ATM",
+    "subtitle": "Moniteur de Durée de Vie Restante de la Flotte"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "register": "Inscription"
+  },
+  "dashboard": {
+    "fleet_size": "Taille de la flotte",
+    "fleetSizeLabel": "Taille de la flotte",
+    "critical": "Critique",
+    "warning": "Attention",
+    "healthy": "Sain",
+    "risk_legend": "Échelle de risque",
+    "search_placeholder": "Rechercher par nom d'ATM...",
+    "institution_filter": "Institution",
+    "risk_filter": "Niveau de risque",
+    "page_size": "Résultats par page",
+    "prev_page": "Précédent",
+    "next_page": "Suivant",
+    "page_info": "Page {page} sur {total}",
+    "empty_state": {
+      "title": "Aucune prédiction pour l'instant",
+      "description": "Le pipeline s'exécute automatiquement chaque jour à {{time}}, en récupérant les {{days}} derniers jours de données ATM. Vous pouvez aussi lancer une exécution manuellement.",
+      "run_now": "Lancer la prédiction maintenant"
+    },
+    "table": {
+      "atm_pid": "ATM (PID)",
+      "institution": "Institution",
+      "atm_name": "Nom de l'ATM",
+      "overall_risk": "Risque global",
+      "weakest_component": "Composant le plus faible",
+      "rul": "DVU"
+    },
+    "detail_panel": {
+      "component": "Composant",
+      "rul": "DVU",
+      "risk": "Risque",
+      "confidence": "Confiance",
+      "gauge": "Jauge"
+    },
+    "runNow": "Lancer la prédiction maintenant",
+    "runningPipeline": "Exécution du pipeline de prédiction…",
+    "logout": "Déconnexion",
+    "riskScale": "Échelle de risque",
+    "healthyToCritical": "sain → critique",
+    "riskRankedFleet": "Flotte classée par risque",
+    "sortedByRisk": "trié par risque global, puis DVU",
+    "noPredictionsYet": "Aucune prédiction pour l'instant",
+    "pipelineRunsDaily": "Le pipeline s'exécute automatiquement chaque jour à",
+    "pullingLastDays": "en récupérant les",
+    "daysOfAtmData": "derniers jours de données ATM. Vous pouvez aussi lancer une exécution manuellement.",
+    "atmPid": "ATM (PID)",
+    "institution": "Institution",
+    "atmName": "Nom de l'ATM",
+    "overallRisk": "Risque global",
+    "weakestComponent": "Composant le plus faible",
+    "rul": "DVU",
+    "prev": "Précédent",
+    "pageOf": "Page {page} sur {total}",
+    "next": "Suivant"
+  },
+  "auth": {
+    "title": "Authentification",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "register": "Inscription",
+    "email": "Email",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "register_btn": "S'inscrire",
+    "error_invalid": "Email ou mot de passe invalide",
+    "error_required": "Ce champ est obligatoire",
+    "error_password_length": "Le mot de passe doit contenir au moins 8 caractères",
+    "welcome_back": "Bon retour",
+    "sign_in_to_account": "Connectez-vous à votre compte",
+    "remember_me": "Se souvenir de moi",
+    "forgot_password": "Mot de passe oublié ?",
+    "sign_in": "Se connecter",
+    "dont_have_account": "Vous n'avez pas de compte ?",
+    "sign_up": "S'inscrire",
+    "create_account": "Créer un compte",
+    "join": "Rejoindre",
+    "confirm_password": "Confirmer le mot de passe",
+    "institution": "Institution",
+    "select_institution": "Sélectionnez votre institution",
+    "choose_institution": "Choisissez l'institution à laquelle vous appartenez",
+    "create_account_btn": "Créer un compte",
+    "already_have_account": "Vous avez déjà un compte ?",
+    "sign_in_link": "Se connecter",
+    "reset_password": "Réinitialiser le mot de passe",
+    "enter_email_reset": "Entrez votre email pour recevoir les instructions de réinitialisation",
+    "send_reset_link": "Envoyer le lien de réinitialisation",
+    "remember_password": "Vous vous souvenez de votre mot de passe ?",
+    "password_strength": "Force du mot de passe"
+  },
+  "components": {
+    "cmd_cas_1": "Cassette 1",
+    "cmd_cas_2": "Cassette 2",
+    "cmd_cas_3": "Cassette 3",
+    "cmd_cas_4": "Cassette 4",
+    "rece_print": "Imprimante reçus"
+  },
+  "risk": {
+    "critical": "Critique",
+    "warning": "Attention",
+    "healthy": "Sain",
+    "unknown": "Inconnu"
+  },
+  "confidence": {
+    "survival": "Survie",
+    "entropy": "Entropie"
+  },
+  "buttons": {
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "logout": "Déconnexion",
+    "cancel": "Annuler",
+    "submit": "Valider",
+    "save": "Enregistrer",
+    "run_now": "Lancer la prédiction maintenant",
+    "clear_filters": "Effacer tous les filtres"
+  },
+  "filters": {
+    "institution": "Institution",
+    "risk_level": "Niveau de risque",
+    "search": "Recherche",
+    "searchPlaceholder": "Rechercher par nom d'ATM...",
+    "searchExpandedPlaceholder": "Rechercher ATM par PID, nom, adresse, institution...",
+    "page_size": "Résultats par page",
+    "allInstitutions": "Toutes les institutions",
+    "allRiskLevels": "Tous les niveaux de risque",
+    "clearAll": "Tout effacer"
+  },
+  "status": {
+    "last_run": "Dernière exécution",
+    "status": "Statut",
+    "success": "Succès",
+    "failed": "Échec",
+    "pending": "En cours"
+  }
+}

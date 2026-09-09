@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ status_code }} - {{ title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    .error-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      margin: 0 auto;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .error-card h1 {
+      font-size: 4rem;
+      margin: 0 0 10px 0;
+      color: var(--risk-critical);
+    }
+    .error-card h2 {
+      margin: 0 0 20px 0;
+      font-weight: 500;
+    }
+    .error-card p {
+      color: var(--text-muted);
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body class="auth-body" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+  <div class="error-card">
+    <img src="/static/img/logo.jpeg" alt="Intelligentsia logo" style="max-height: 60px; margin-bottom: 20px;" />
+    <h1>{{ status_code }}</h1>
+    <h2>{{ title }}</h2>
+    <p>{{ detail }}</p>
+    <a href="/" class="btn btn-primary" style="text-decoration: none; display: inline-block;">Return Home</a>
+  </div>
+</body>
+</html>

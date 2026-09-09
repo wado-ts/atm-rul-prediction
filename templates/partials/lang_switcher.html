@@ -1,0 +1,9 @@
+{# templates/partials/lang_switcher.html #}
+<div class="lang-switcher">
+  <button class="lang-btn {% if request.state.locale == 'en' %}active{% endif %}" data-lang="en" aria-label="Switch to English">
+    <span class="lang-code">EN</span>
+  </button>
+  <button class="lang-btn {% if request.state.locale == 'fr' %}active{% endif %}" data-lang="fr" aria-label="Switch to French">
+    <span class="lang-code">FR</span>
+  </button>
+</div>

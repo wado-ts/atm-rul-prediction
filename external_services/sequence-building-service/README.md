@@ -77,7 +77,7 @@ holds.
 
 ```bash
 python -m venv .venv
-.venv/bin/activate   # .venv\Scripts\activate.bat on Windows
+.venv\Scripts\activate.bat
 pip install -r requirements.txt
 copy .env.example .env
 uvicorn app.main:app --reload --port 9001

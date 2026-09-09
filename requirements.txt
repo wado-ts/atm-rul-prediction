@@ -8,3 +8,6 @@ httpx>=0.27
 apscheduler>=3.10
 python-multipart>=0.0.9
 polars>=1.42
+bcrypt>=4.0
+python-jose>=1.0
+psycopg[binary]>=3.1

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="{{ request.state.locale or 'fr' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="auth.title">Authentication - {{ app_name }}</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=5" />
+</head>
+<body class="auth-body">
+  <div class="auth-container">
+    <!-- Left Panel - Brand/Visual -->
+    <div class="auth-visual">
+      <div class="visual-content">
+        <img src="/static/img/logo.jpeg" alt="Intelligentsia logo" class="visual-logo" />
+        <h1 data-i18n="app.name">{{ app_name }}</h1>
+        <p data-i18n="app.subtitle">Predictive Maintenance Dashboard</p>
+        <div class="visual-decoration"></div>
+      </div>
+    </div>
+
+    <!-- Right Panel - Forms -->
+    <div class="auth-forms">
+      <!-- {% include 'partials/lang_switcher.html' %} -->
+
+      <!-- Login View -->
+      <div class="auth-view" id="login-view" data-view="login">
+        <div class="auth-header">
+          <h2 data-i18n="auth.welcome_back">Welcome back</h2>
+          <p data-i18n="auth.sign_in_to_account">Sign in to your account</p>
+        </div>
+
+        {% if error %}
+        <div class="auth-message error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form class="auth-form" method="post" action="/auth/login" data-form="login">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          
+          <div class="form-group">
+            <label for="login-email" data-i18n="auth.email">Email address</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              <input id="login-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+            </div>
+            <span class="field-error" id="email-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="login-password" data-i18n="auth.password">Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+              <button type="button" class="password-toggle" aria-label="Show password">
+                <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </button>
+            </div>
+            <span class="field-error" id="password-error"></span>
+          </div>
+
+          <div class="form-options">
+            <label class="checkbox-wrapper">
+              <input type="checkbox" name="remember" />
+              <span data-i18n="auth.remember_me">Remember me</span>
+            </label>
+            <button type="button" class="link-button" data-switch="forgot" data-i18n="auth.forgot_password">Forgot password?</button>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" data-submit="login">
+            <span class="btn-text" data-i18n="auth.sign_in">Sign in</span>
+            <svg class="spinner" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.25" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" />
+              </path>
+            </svg>
+          </button>
+
+          <p class="auth-switch">
+            <span data-i18n="auth.dont_have_account">Don't have an account?</span> <button type="button" class="link-button" data-switch="register" data-i18n="auth.sign_up">Sign up</button>
+          </p>
+        </form>
+      </div>
+
+      <!-- Register View -->
+      <div class="auth-view hidden" id="register-view" data-view="register">
+        <div class="auth-header">
+          <h2 data-i18n="auth.create_account">Create account</h2>
+          <p data-i18n="auth.join">{{ app_name }}</p>
+        </div>
+
+        <form class="auth-form" method="post" action="/auth/register" data-form="register">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          
+          <div class="form-group">
+            <label for="register-email" data-i18n="auth.email">Email address</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              <input id="register-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+            </div>
+            <span class="field-error" id="email-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="register-password" data-i18n="auth.password">Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <input id="register-password" name="password" type="password" autocomplete="new-password" required placeholder="••••••••" />
+              <button type="button" class="password-toggle" aria-label="Show password">
+                <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </button>
+            </div>
+            <div class="password-strength">
+              <div class="strength-bar">
+                <div class="strength-fill" id="strength-fill"></div>
+              </div>
+              <span class="strength-text" id="strength-text" data-i18n="auth.password_strength">Password strength</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="register-confirm" data-i18n="auth.confirm_password">Confirm password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <input id="register-confirm" name="confirm_password" type="password" autocomplete="new-password" required placeholder="••••••••" />
+            </div>
+            <span class="field-error" id="confirm-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="register-institution" data-i18n="auth.institution">Institution</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-9a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v9" />
+              </svg>
+              <select id="register-institution" name="institution_code" required>
+                <option value="" data-i18n="auth.select_institution">Select your institution</option>
+                {% for institution in institutions %}
+                <option value="{{ institution[0] }}">{{ institution[1] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <small class="form-hint" data-i18n="auth.choose_institution">Choose the institution you belong to</small>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" data-submit="register">
+            <span class="btn-text" data-i18n="auth.create_account_btn">Create account</span>
+            <svg class="spinner" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.25" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" />
+              </path>
+            </svg>
+          </button>
+
+          <p class="auth-switch">
+            <span data-i18n="auth.already_have_account">Already have an account?</span> <button type="button" class="link-button" data-switch="login" data-i18n="auth.sign_in_link">Sign in</button>
+          </p>
+        </form>
+      </div>
+
+      <!-- Forgot Password View -->
+      <div class="auth-view hidden" id="forgot-view" data-view="forgot">
+        <div class="auth-header">
+          <h2 data-i18n="auth.reset_password">Reset password</h2>
+          <p data-i18n="auth.enter_email_reset">Enter your email to receive reset instructions</p>
+        </div>
+
+        <form class="auth-form" method="post" action="/auth/forgot-password" data-form="forgot">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          
+          <div class="form-group">
+            <label for="forgot-email" data-i18n="auth.email">Email address</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              <input id="forgot-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" data-submit="forgot">
+            <span class="btn-text" data-i18n="auth.send_reset_link">Send reset link</span>
+            <svg class="spinner" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.25" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" />
+              </path>
+            </svg>
+          </button>
+
+          <p class="auth-switch">
+            <span data-i18n="auth.remember_password">Remember your password?</span> <button type="button" class="link-button" data-switch="login" data-i18n="auth.sign_in_link">Sign in</button>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/i18n.js"></script>
+</body>
+</html>

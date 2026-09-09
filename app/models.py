@@ -21,6 +21,7 @@ class MonetaryLogRecord(BaseModel):
     query_date: datetime
     version: int
     institution: str | None = None
+    address: str | None = None
     nbre_cas_1: int
     nbre_cas_2: int
     nbre3: int
@@ -57,6 +58,12 @@ RISK_SEVERITY: dict[RiskLevel, int] = {
 }
 
 
+class Institution(BaseModel):
+    code: str
+    name: str
+    is_global: bool = False
+
+
 class ComponentPrediction(BaseModel):
     """One component's RUL prediction for one ATM, as returned by the
     inference service (before/after risk-level thresholding is applied)."""
@@ -77,6 +84,9 @@ class AtmPrediction(BaseModel):
     overall risk, as shown on the dashboard."""
 
     pid: str
+    institution_code: str | None = None
+    institution_name: str | None = None
+    address: str | None = None
     last_query_date: datetime | None = None
     components: list[ComponentPrediction] = Field(default_factory=list)
     overall_risk: RiskLevel = RiskLevel.UNKNOWN
@@ -99,3 +109,27 @@ class FleetPredictionResult(BaseModel):
 
 class RunPipelineRequest(BaseModel):
     triggered_by: str = "manual"
+
+
+class ActiveFilters(BaseModel):
+    institution_code: str | None = None
+    risk_level: RiskLevel | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 20
+
+
+class PaginatedPredictionsResponse(BaseModel):
+    predictions: list[AtmPrediction]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    institutions: list[Institution]
+    risk_levels: list[RiskLevel] = list(RiskLevel)
+    # Overall statistics for all ATMs (before filtering/pagination)
+    fleet_size: int = 0
+    critical_count: int = 0
+    warning_count: int = 0
+    healthy_count: int = 0
+    active_filters: ActiveFilters

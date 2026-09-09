@@ -1,0 +1,150 @@
+{
+  "app": {
+    "name": "ATM Predictive Maintenance",
+    "subtitle": "Fleet Remaining-Useful-Life Monitor"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register"
+  },
+  "dashboard": {
+    "fleet_size": "Fleet size",
+    "fleetSizeLabel": "Fleet size",
+    "critical": "Critical",
+    "warning": "Warning",
+    "healthy": "Healthy",
+    "risk_legend": "Risk scale",
+    "search_placeholder": "Search by ATM name...",
+    "institution_filter": "Institution",
+    "risk_filter": "Risk Level",
+    "page_size": "Page Size",
+    "prev_page": "Prev",
+    "next_page": "Next",
+    "page_info": "Page {page} of {total}",
+    "empty_state": {
+      "title": "No predictions yet",
+      "description": "The pipeline runs automatically every day at {{time}}, pulling the last {{days}} days of ATM data. You can also trigger a run right now.",
+      "run_now": "Run prediction now"
+    },
+    "table": {
+      "atm_pid": "ATM (PID)",
+      "institution": "Institution",
+      "atm_name": "ATM Name",
+      "overall_risk": "Overall risk",
+      "weakest_component": "Weakest component",
+      "rul": "RUL"
+    },
+    "detail_panel": {
+      "component": "Component",
+      "rul": "RUL",
+      "risk": "Risk",
+      "confidence": "Confidence",
+      "gauge": "Gauge"
+    },
+    "runNow": "Run prediction now",
+    "runningPipeline": "Running prediction pipeline…",
+    "logout": "Logout",
+    "riskScale": "Risk scale",
+    "healthyToCritical": "healthy → critical",
+    "riskRankedFleet": "Risk-ranked fleet",
+    "sortedByRisk": "sorted by overall risk, then RUL",
+    "noPredictionsYet": "No predictions yet",
+    "pipelineRunsDaily": "The pipeline runs automatically every day at",
+    "pullingLastDays": "pulling the last",
+    "daysOfAtmData": "days of ATM data. You can also trigger a run right now.",
+    "atmPid": "ATM (PID)",
+    "institution": "Institution",
+    "atmName": "ATM Name",
+    "overallRisk": "Overall risk",
+    "weakestComponent": "Weakest component",
+    "rul": "RUL",
+    "prev": "Prev",
+    "pageOf": "Page {page} of {total}",
+    "next": "Next"
+  },
+  "auth": {
+    "title": "Authentication",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "register_btn": "Register",
+    "error_invalid": "Invalid email or password",
+    "error_required": "This field is required",
+    "error_password_length": "Password must be at least 8 characters",
+    "welcome_back": "Welcome back",
+    "sign_in_to_account": "Sign in to your account",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot password?",
+    "sign_in": "Sign in",
+    "dont_have_account": "Don't have an account?",
+    "sign_up": "Sign up",
+    "create_account": "Create account",
+    "join": "Join",
+    "confirm_password": "Confirm password",
+    "institution": "Institution",
+    "select_institution": "Select your institution",
+    "choose_institution": "Choose the institution you belong to",
+    "create_account_btn": "Create account",
+    "already_have_account": "Already have an account?",
+    "sign_in_link": "Sign in",
+    "reset_password": "Reset password",
+    "enter_email_reset": "Enter your email to receive reset instructions",
+    "send_reset_link": "Send reset link",
+    "remember_password": "Remember your password?",
+    "password_strength": "Password strength"
+  },
+  "components": {
+    "cmd_cas_1": "Cassette 1",
+    "cmd_cas_2": "Cassette 2",
+    "cmd_cas_3": "Cassette 3",
+    "cmd_cas_4": "Cassette 4",
+    "rece_print": "Receipt Printer"
+  },
+  "risk": {
+    "critical": "Critical",
+    "warning": "Warning",
+    "healthy": "Healthy",
+    "unknown": "Unknown"
+  },
+  "confidence": {
+    "survival": "Survival",
+    "entropy": "Entropy"
+  },
+  "buttons": {
+    "login": "Log in",
+    "register": "Register",
+    "logout": "Logout",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "save": "Save",
+    "run_now": "Run prediction now",
+    "clear_filters": "Clear all filters"
+  },
+  "filters": {
+    "institution": "Institution",
+    "risk_level": "Risk Level",
+    "search": "Search",
+    "searchPlaceholder": "Search by ATM name...",
+    "searchExpandedPlaceholder": "Search ATM by PID, name, address, institution...",
+    "page_size": "Page Size",
+    "allInstitutions": "All Institutions",
+    "allRiskLevels": "All Risk Levels",
+    "clearAll": "Clear all"
+  },
+  "status": {
+    "last_run": "Last run",
+    "status": "Status",
+    "success": "Success",
+    "failed": "Failed",
+    "pending": "In progress"
+  },
+  "confidence": {
+    "survival": "Survival",
+    "entropy": "Entropy"
+  }
+}
