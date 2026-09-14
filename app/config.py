@@ -74,6 +74,13 @@ class Settings(BaseSettings):
     jwt_refresh_expiration_days: int = 30
     password_reset_expiration_minutes: int = 30
     password_reset_base_url: str = "http://localhost:8000"
+    smtp_host: Optional[str] = None
+    smtp_port: int = 587
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_from_email: Optional[str] = None
+    smtp_use_tls: bool = True
+    smtp_timeout_seconds: float = 15.0
     jwt_private_key_path: Optional[str] = None
     jwt_public_key_path: Optional[str] = None
 

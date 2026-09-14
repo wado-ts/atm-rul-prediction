@@ -28,6 +28,7 @@ from app.auth_db import (
     user_count,
 )
 from app.config import get_settings
+from app.email import send_password_reset_email, smtp_is_configured
 
 router = APIRouter(tags=["auth"])
 templates = Jinja2Templates(directory="templates")
@@ -261,9 +262,18 @@ async def forgot_password(
         )
         create_password_reset_token(user.id, token, expires_at)
         reset_url = f"{get_settings().password_reset_base_url.rstrip('/')}/auth/reset-password?token={token}"
-        # Replace this log with a mail provider integration in production.
-        import logging
-        logging.getLogger(__name__).info("Password reset link generated for %s: %s", email, reset_url)
+        if smtp_is_configured():
+            try:
+                await send_password_reset_email(email, reset_url)
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception("Password reset email delivery failed")
+        elif get_settings().environment.lower() != "production":
+            import logging
+            logging.getLogger(__name__).info("Password reset link generated for local testing: %s", reset_url)
+
+        if get_settings().environment.lower() == "production":
+            reset_url = None
 
     new_csrf = secrets.token_urlsafe(32)
     request.session["csrf_token"] = new_csrf

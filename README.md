@@ -214,8 +214,10 @@ The Kubernetes ConfigMap is aligned with the production `.env` for
 Populate `POSTGRES_DSN` with a PostgreSQL hostname reachable from the cluster;
 do not use `localhost` unless PostgreSQL runs in the same container.
 Set `PASSWORD_RESET_BASE_URL` to the public HTTPS URL of the deployed app.
-The current local implementation logs generated reset links; connect the route
-to an email provider before enabling password reset in production.
+Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM_EMAIL`, and the SMTP credentials
+before enabling password reset in production. SMTP credentials belong in the
+Kubernetes Secret, not the ConfigMap. Without SMTP configuration, local
+development logs a test reset link; production never logs or renders tokens.
 
 Push the images to a private registry and update the image names in
 `k8s/base/services.yaml` or use a Kustomize overlay. The main app is pinned to
