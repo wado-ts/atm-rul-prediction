@@ -11,28 +11,52 @@ POLL_INTERVAL_SECONDS="${LOCAL_SERVICE_POLL_INTERVAL_SECONDS:-2}"
 
 mkdir -p "$LOG_DIR"
 
-find_python() {
-    local service_dir="$1"
-    local windows_python="$service_dir/.venv/Scripts/python.exe"
-    local unix_python="$service_dir/.venv/bin/python"
-
-    if [[ -x "$windows_python" ]]; then
-        printf '%s\n' "$windows_python"
-    elif [[ -x "$unix_python" ]]; then
-        printf '%s\n' "$unix_python"
-    elif command -v python >/dev/null 2>&1; then
+find_system_python() {
+    if command -v python >/dev/null 2>&1; then
         command -v python
     elif command -v python3 >/dev/null 2>&1; then
         command -v python3
     else
-        echo "Python was not found for $service_dir. Create its .venv or install Python 3.11+." >&2
+        echo "Python was not found. Install Python 3.11+ before starting services." >&2
         exit 1
     fi
 }
 
-SEQUENCE_PYTHON_BIN="$(find_python "$SEQUENCE_DIR")"
-INFERENCE_PYTHON_BIN="$(find_python "$INFERENCE_DIR")"
-APP_PYTHON_BIN="$(find_python "$APP_DIR")"
+ensure_env() {
+    local service_dir="$1"
+    local service_name="$2"
+    local windows_python="$service_dir/.venv/Scripts/python.exe"
+    local unix_python="$service_dir/.venv/bin/python"
+    local python_bin
+
+    if [[ -x "$windows_python" ]]; then
+        python_bin="$windows_python"
+    elif [[ -x "$unix_python" ]]; then
+        python_bin="$unix_python"
+    else
+        local system_python
+        system_python="$(find_system_python)"
+        echo "Creating $service_name virtual environment..."
+        "$system_python" -m venv "$service_dir/.venv"
+        if [[ -x "$windows_python" ]]; then
+            python_bin="$windows_python"
+        elif [[ -x "$unix_python" ]]; then
+            python_bin="$unix_python"
+        else
+            echo "Could not create the $service_name virtual environment." >&2
+            exit 1
+        fi
+    fi
+
+    if [[ ! -f "$service_dir/requirements.txt" ]]; then
+        echo "Requirements file not found for $service_name: $service_dir/requirements.txt" >&2
+        exit 1
+    fi
+
+    echo "Installing or verifying $service_name Python packages..."
+    "$python_bin" -m pip install --disable-pip-version-check -r "$service_dir/requirements.txt" >&2
+    printf '%s\n' "$python_bin"
+}
 
 if ! command -v curl >/dev/null 2>&1; then
     echo "curl is required for service readiness checks." >&2
@@ -45,6 +69,10 @@ for required_dir in "$SEQUENCE_DIR" "$INFERENCE_DIR" "$APP_DIR"; do
         exit 1
     fi
 done
+
+SEQUENCE_PYTHON_BIN="$(ensure_env "$SEQUENCE_DIR" "sequence-builder")"
+INFERENCE_PYTHON_BIN="$(ensure_env "$INFERENCE_DIR" "inference")"
+APP_PYTHON_BIN="$(ensure_env "$APP_DIR" "atm-rul-app")"
 
 PIDS=()
 

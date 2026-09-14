@@ -14,18 +14,7 @@ $Processes = @()
 
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 
-function Find-Python([string]$ServiceDir) {
-    $candidates = @(
-        (Join-Path $ServiceDir '.venv/Scripts/python.exe'),
-        (Join-Path $ServiceDir '.venv/bin/python')
-    )
-
-    foreach ($candidate in $candidates) {
-        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
-            return (Resolve-Path -LiteralPath $candidate).Path
-        }
-    }
-
+function Find-SystemPython {
     $python = Get-Command python -ErrorAction SilentlyContinue
     if ($python) {
         return $python.Source
@@ -36,7 +25,37 @@ function Find-Python([string]$ServiceDir) {
         return $python3.Source
     }
 
-    throw "Python was not found for $ServiceDir. Create its .venv or install Python 3.11+."
+    throw "Python was not found. Create a service .venv or install Python 3.11+."
+}
+
+function Ensure-Environment([string]$ServiceDir, [string]$ServiceName) {
+    $venvWindowsPython = Join-Path $ServiceDir '.venv/Scripts/python.exe'
+    $venvUnixPython = Join-Path $ServiceDir '.venv/bin/python'
+    $python = if (Test-Path -LiteralPath $venvWindowsPython -PathType Leaf) {
+        (Resolve-Path -LiteralPath $venvWindowsPython).Path
+    } elseif (Test-Path -LiteralPath $venvUnixPython -PathType Leaf) {
+        (Resolve-Path -LiteralPath $venvUnixPython).Path
+    } else {
+        $systemPython = Find-SystemPython
+        Write-Host "Creating $ServiceName virtual environment..."
+        & $systemPython -m venv (Join-Path $ServiceDir '.venv')
+        if ($LASTEXITCODE -ne 0) { throw "Could not create the $ServiceName virtual environment." }
+        if (Test-Path -LiteralPath $venvWindowsPython -PathType Leaf) {
+            (Resolve-Path -LiteralPath $venvWindowsPython).Path
+        } else {
+            (Resolve-Path -LiteralPath $venvUnixPython).Path
+        }
+    }
+
+    $requirements = Join-Path $ServiceDir 'requirements.txt'
+    if (-not (Test-Path -LiteralPath $requirements -PathType Leaf)) {
+        throw "Requirements file not found for ${ServiceName}: $requirements"
+    }
+
+    Write-Host "Installing or verifying $ServiceName Python packages..."
+    & $python -m pip install --disable-pip-version-check -r $requirements | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "Could not install packages for $ServiceName." }
+    return $python
 }
 
 foreach ($requiredDir in @($AppDir, $SequenceDir, $InferenceDir)) {
@@ -45,9 +64,9 @@ foreach ($requiredDir in @($AppDir, $SequenceDir, $InferenceDir)) {
     }
 }
 
-$SequencePython = Find-Python $SequenceDir
-$InferencePython = Find-Python $InferenceDir
-$AppPython = Find-Python $AppDir
+$SequencePython = Ensure-Environment $SequenceDir 'sequence-builder'
+$InferencePython = Ensure-Environment $InferenceDir 'inference'
+$AppPython = Ensure-Environment $AppDir 'atm-rul-app'
 
 function Start-ServiceProcess([string]$Name, [string]$Directory, [string]$Python, [int]$Port) {
     $stdoutPath = Join-Path $LogDir "$Name.out.log"

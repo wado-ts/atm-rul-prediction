@@ -162,6 +162,9 @@ directory so its `.env` file and relative artifacts are resolved correctly.
 Logs are written to `scripts/logs/`. Press `Ctrl+C` to stop all services.
 Both launchers use each service's local `.venv` when available and do not
  use Uvicorn reload mode, preventing duplicate scheduler processes.
+If a service `.venv` does not exist, the launcher creates it and installs that
+service's `requirements.txt`. It also verifies the requirements on each run,
+so the first start may take several minutes, especially for PyTorch.
 
 Optional environment variables:
 
