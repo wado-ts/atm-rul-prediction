@@ -86,3 +86,17 @@ uvicorn app.main:app --reload --port 9001
 Point the main app's `SEQUENCE_BUILDER_URL` at
 `http://localhost:9001/build-sequences` once the component builders are
 implemented.
+
+## Container image
+
+Build from this directory so the image includes the service code and runtime
+artifacts:
+
+```bash
+docker build -t atm-rul-sequence-builder:latest .
+docker run --rm -p 9001:9001 atm-rul-sequence-builder:latest
+```
+
+The image runs as a non-root user and exposes `/healthz` for container and
+Kubernetes probes. In Kubernetes, use the `sequence-builder` resource in
+`../../../k8s/base/services.yaml`.

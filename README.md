@@ -137,6 +137,55 @@ URLs in `.env` before expecting a successful run — with placeholders,
 clicking "Run prediction now" will fail at whichever step isn't reachable,
 and the dashboard surfaces that error directly rather than failing silently.
 
+## Container deployment
+
+Build the three service images from `src/atm-rul-app`:
+
+```bash
+docker build -t atm-rul-app:latest .
+docker build -t atm-rul-sequence-builder:latest external_services/sequence-building-service
+docker build -t atm-rul-inference:latest external_services/inference-service
+```
+
+The sequence-builder image includes its feature-engineering artifacts. The
+inference image includes its trained models, configuration files, and bin
+edges. Treat those images as private because they contain model artifacts.
+
+The Kubernetes base resources are in `k8s/base`. The example Secret is a
+template only and is intentionally excluded from `kustomization.yaml`:
+
+```bash
+kubectl apply -f k8s/base/namespace.yaml
+# Option A: populate a local, git-ignored copy of the template, then apply it.
+copy k8s\\base\\secret.example.yaml k8s\\base\\secret.local.yaml
+# Edit secret.local.yaml with real values, then run:
+kubectl apply -f k8s/base/secret.local.yaml
+
+# Option B: create the Secret directly or use your external secret manager.
+# kubectl create secret generic atm-rul-secrets -n atm-rul ...
+
+kubectl apply -k k8s/base
+kubectl -n atm-rul get pods,svc
+```
+
+Never commit `secret.local.yaml`. Kubernetes Secret values are base64-encoded
+and should be protected with RBAC and encryption at rest; for production,
+prefer a managed secret solution such as External Secrets Operator, Azure Key
+Vault, AWS Secrets Manager, or GCP Secret Manager.
+
+The Kubernetes ConfigMap is aligned with the production `.env` for
+`ORACLE_SOURCE_TABLE`, `LOOKBACK_DAYS`, and the in-cluster service URLs.
+Populate `POSTGRES_DSN` with a PostgreSQL hostname reachable from the cluster;
+do not use `localhost` unless PostgreSQL runs in the same container.
+
+Push the images to a private registry and update the image names in
+`k8s/base/services.yaml` or use a Kustomize overlay. The main app is pinned to
+one replica because APScheduler currently runs inside the web process. Move
+the scheduler to a dedicated worker or Kubernetes CronJob before scaling the
+main app. Oracle and PostgreSQL are external dependencies supplied through the
+Secret. The app Service is a `LoadBalancer`; the two model services are
+internal `ClusterIP` Services.
+
 ## Configuration
 
 All configuration is via environment variables (see `.env.example`):

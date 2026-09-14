@@ -105,6 +105,30 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
           
           <div class="form-group">
+            <label for="register-first-name" data-i18n="auth.first_name">First name</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <input id="register-first-name" name="first_name" type="text" autocomplete="given-name" required placeholder="John" />
+            </div>
+            <span class="field-error" id="first-name-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="register-last-name" data-i18n="auth.last_name">Last name</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <input id="register-last-name" name="last_name" type="text" autocomplete="family-name" required placeholder="Doe" />
+            </div>
+            <span class="field-error" id="last-name-error"></span>
+          </div>
+
+          <div class="form-group">
             <label for="register-email" data-i18n="auth.email">Email address</label>
             <div class="input-wrapper">
               <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

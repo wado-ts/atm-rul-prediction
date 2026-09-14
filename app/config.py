@@ -42,7 +42,7 @@ class Settings(BaseSettings):
 
     # ---- Data source --------------------------------------------------------
     # Use "csv" for local/testing runs that should bypass Oracle entirely.
-    data_source: Literal["oracle", "csv"] = "csv"
+    data_source: Literal["oracle", "csv"] = "oracle"
     csv_path: str = "data/monetary_data.csv"
     # Optional fixed reference time for testing (ISO format). If not set, uses datetime.utcnow()
     csv_reference_time: Optional[str] = None

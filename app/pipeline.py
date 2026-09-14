@@ -18,6 +18,7 @@ import logging
 import uuid
 from datetime import datetime
 
+from app.auth_db import get_institutions
 from app.database import fetch_last_month_data_grouped_by_pid
 from app.models import AtmPrediction, ComponentPrediction, FleetPredictionResult, PidLogGroup, RiskLevel
 from app.risk import compute_overall_risk, derive_component_risk, find_weakest_component
@@ -74,16 +75,21 @@ def _generate_synthesized_predictions() -> list[AtmPrediction]:
     return predictions
 
 
-def _latest_query_date(group: PidLogGroup) -> datetime | None:
+def _latest_query_date_and_address(group: PidLogGroup) -> tuple[datetime | None, str | None]:
+    """Get the latest query date and address from a PID group."""
     if not group.records:
-        return None
-    return max(record.query_date for record in group.records)
+        return None, None
+    latest_record = max(group.records, key=lambda r: r.query_date)
+    return latest_record.query_date, latest_record.address
 
 
 async def _predict_one_atm(
     pid: str,
     component_sequences: list[dict],
     last_query_date: datetime | None,
+    institution_code: str | None,
+    institution_name: str | None,
+    address: str | None,
     semaphore: asyncio.Semaphore,
 ) -> AtmPrediction:
     async with semaphore:
@@ -99,6 +105,9 @@ async def _predict_one_atm(
 
     return AtmPrediction(
         pid=pid,
+        institution_code=institution_code,
+        institution_name=institution_name,
+        address=address,
         last_query_date=last_query_date,
         components=resolved_components,
         overall_risk=overall_risk,
@@ -133,7 +142,31 @@ async def run_pipeline(triggered_by: str = "manual") -> FleetPredictionResult:
         #     prediction_store.push_history(result)
         #     return result
 
-        last_query_dates = {group.pid: _latest_query_date(group) for group in pid_groups}
+        last_query_dates_and_addresses = {
+            group.pid: _latest_query_date_and_address(group) 
+            for group in pid_groups
+        }
+
+        # Fetch institutions for mapping codes to names
+        institutions = get_institutions()
+        institutions_map = {inst.code: inst.name for inst in institutions}
+
+        # Build a mapping of PID to institution info from the records
+        pid_to_institution = {}
+        for group in pid_groups:
+            if group.records:
+                try:
+                    latest_record = max(group.records, key=lambda r: r.query_date)
+                    inst_code = latest_record.institution
+                    # Use institution code directly as name if not found in mapping
+                    inst_name = institutions_map.get(str(inst_code)) if inst_code else None
+                    # Fallback: use the institution code as the name if no mapping found
+                    if not inst_name and inst_code:
+                        inst_name = str(inst_code)
+                    pid_to_institution[group.pid] = (str(inst_code) if inst_code else None, inst_name)
+                except Exception as e:
+                    logger.warning(f"Failed to extract institution info for PID {group.pid}: {e}")
+                    pid_to_institution[group.pid] = (None, None)
 
         # 2. Build sequences via the sequence-building service - one batched
         #    call for the whole fleet, 5 sequences (one per component) per ATM.
@@ -144,7 +177,15 @@ async def run_pipeline(triggered_by: str = "manual") -> FleetPredictionResult:
         semaphore = asyncio.Semaphore(_MAX_CONCURRENT_INFERENCE_CALLS)
         atm_predictions = await asyncio.gather(
             *(
-                _predict_one_atm(pid, component_sequences, last_query_dates.get(pid), semaphore)
+                _predict_one_atm(
+                    pid, 
+                    component_sequences, 
+                    last_query_dates_and_addresses[pid][0],
+                    pid_to_institution.get(pid, (None, None))[0],
+                    pid_to_institution.get(pid, (None, None))[1],
+                    last_query_dates_and_addresses[pid][1],
+                    semaphore
+                )
                 for pid, component_sequences in fleet_sequences.items()
             )
         )

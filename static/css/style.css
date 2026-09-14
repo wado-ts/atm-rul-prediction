@@ -123,8 +123,9 @@ a {
 }
 
 .header-inner {
-  max-width: 1240px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
   padding: 18px 32px;
   display: flex;
   align-items: center;
@@ -336,17 +337,18 @@ main {
 .run-banner {
   display: none;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--grey-line);
   border-left: 5px solid var(--bronze);
-  padding: 16px 24px;
-  border-radius: 10px;
+  padding: 14px 20px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   box-shadow: var(--shadow-sm);
   transition: var(--transition-normal);
 }
@@ -363,9 +365,44 @@ main {
 
 .run-banner.error {
   border-left-color: var(--risk-critical-border);
-  background: rgba(253, 236, 234, 0.9);
-  border-color: rgba(198, 40, 40, 0.2);
+  background: rgba(253, 236, 234, 0.95);
+  border-color: rgba(198, 40, 40, 0.3);
   color: var(--risk-critical-text);
+}
+
+.run-banner.success {
+  border-left-color: var(--risk-healthy-border);
+  background: rgba(234, 245, 234, 0.95);
+  border-color: rgba(67, 160, 71, 0.3);
+  color: var(--risk-healthy-text);
+}
+
+.run-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.run-banner-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(156, 107, 48, 0.1);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--bronze);
+  transition: var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.run-banner-close:hover {
+  background: var(--bronze);
+  color: var(--paper);
 }
 
 .spinner {
@@ -671,7 +708,7 @@ main {
    Modern Filter Bar Enhancements
    ============================================================ */
 
-/* Search Expand/Collapse */
+/* Search Wrapper */
 .search-wrapper {
   position: relative;
   display: flex;
@@ -700,17 +737,6 @@ main {
 
 .search-wrapper input:hover {
   border-color: rgba(156, 107, 48, 0.4);
-}
-
-.search-wrapper input.collapsed {
-  max-width: 180px;
-  transition: max-width var(--duration-normal) var(--ease-smooth), width var(--duration-normal) var(--ease-smooth);
-}
-
-.search-wrapper input.expanded {
-  max-width: 100%;
-  width: 100%;
-  transition: max-width var(--duration-normal) var(--ease-smooth), width var(--duration-normal) var(--ease-smooth);
 }
 
 .search-icon {
@@ -921,11 +947,6 @@ main {
   
   .filter-group.search-group {
     max-width: 100%;
-  }
-  
-  .search-wrapper input.collapsed {
-    max-width: 100%;
-    width: 100%;
   }
   
   .active-filters {
@@ -1839,6 +1860,14 @@ table.fleet tbody tr:last-child td {
   main { padding: 24px 16px 60px; }
   .section-title h2 { font-size: 24px; }
   .stat-card .value { font-size: 32px; }
+}
+
+/* Ensure institution column is visible */
+table.fleet thead th:nth-child(3),
+table.fleet tbody td:nth-child(3) {
+  display: table-cell;
+  visibility: visible;
+  width: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

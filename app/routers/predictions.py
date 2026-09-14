@@ -69,14 +69,23 @@ async def get_latest_prediction(
     # Get all predictions for this run
     predictions = current_run.predictions
     
+    # Apply user-based institution filtering
+    # If user has an institution_code and it's not the global '0', filter to their institution
+    if current_user.institution_code and current_user.institution_code != '0':
+        predictions = [p for p in predictions if p.institution_code == current_user.institution_code]
+    
     # Calculate overall statistics from all predictions (before filtering)
     fleet_size = len(predictions)
     critical_count = sum(1 for p in predictions if p.overall_risk == RiskLevel.CRITICAL)
     warning_count = sum(1 for p in predictions if p.overall_risk == RiskLevel.WARNING)
     healthy_count = sum(1 for p in predictions if p.overall_risk == RiskLevel.HEALTHY)
     
-    # Apply institution filter
+    # Apply institution filter (only allow filtering within user's accessible institutions)
     if institution_code:
+        # If user has a specific institution, only allow filtering that institution
+        if current_user.institution_code and current_user.institution_code != '0':
+            if institution_code != current_user.institution_code:
+                institution_code = None  # Ignore invalid institution filter
         predictions = [p for p in predictions if p.institution_code == institution_code]
     
     # Apply risk level filter
@@ -124,6 +133,10 @@ async def get_latest_prediction(
     
     # Get all institutions for dropdown (including those not in current run)
     all_institutions = get_all_institutions()
+    # Filter institutions based on user's access
+    if current_user.institution_code and current_user.institution_code != '0':
+        all_institutions = [inst for inst in all_institutions if inst.code == current_user.institution_code]
+    
     # Convert auth_db Institution dataclass to models Institution Pydantic model
     all_institutions_models = [
         Institution(code=inst.code, name=inst.name, is_global=inst.is_global)

@@ -147,6 +147,8 @@ async def register_page(request: Request) -> HTMLResponse:
 @router.post("/register", response_model=None)
 async def register(
     request: Request,
+    first_name: Annotated[str, Form()],
+    last_name: Annotated[str, Form()],
     email: Annotated[str, Form()],
     password: Annotated[str, Form()],
     csrf_token: Annotated[str, Form()],
@@ -183,7 +185,13 @@ async def register(
     request.session["csrf_token"] = secrets.token_urlsafe(32)
     
     try:
-        user = create_user(email, hash_password(password), institution_code=institution_code if institution_code else None)
+        user = create_user(
+            email, 
+            hash_password(password), 
+            first_name=first_name,
+            last_name=last_name,
+            institution_code=institution_code if institution_code else None
+        )
     except UniqueViolation:
         return templates.TemplateResponse(
             request,

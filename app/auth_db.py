@@ -23,8 +23,11 @@ class User:
     id: int
     email: str
     password_hash: str
-    institution_code: str | None
     created_at: datetime
+    first_name: str | None = None
+    last_name: str | None = None
+    institution_code: str | None = None
+    
 
 
 def create_database_if_not_exists() -> None:
@@ -93,6 +96,8 @@ def init_auth_db() -> None:
                 id BIGSERIAL PRIMARY KEY,
                 email TEXT NOT NULL UNIQUE,
                 password_hash TEXT NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
                 institution_code TEXT REFERENCES institutions(code),
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
@@ -121,7 +126,7 @@ def get_user_by_email(email: str) -> User | None:
     with get_connection() as conn:
         row = conn.execute(
             """
-            SELECT id, email, password_hash, institution_code, created_at
+            SELECT id, email, password_hash, first_name, last_name, institution_code, created_at
             FROM app_users
             WHERE lower(email) = lower(%s)
             """,
@@ -134,7 +139,7 @@ def get_user_by_id(user_id: int) -> User | None:
     with get_connection() as conn:
         row = conn.execute(
             """
-            SELECT id, email, password_hash, institution_code, created_at
+            SELECT id, email, password_hash, first_name, last_name, institution_code, created_at
             FROM app_users
             WHERE id = %s
             """,
@@ -144,16 +149,20 @@ def get_user_by_id(user_id: int) -> User | None:
 
 
 def create_user(
-    email: str, password_hash: str, institution_code: str | None = None
+    email: str, 
+    password_hash: str, 
+    first_name: str | None = None,
+    last_name: str | None = None,
+    institution_code: str | None = None
 ) -> User:
     with get_connection() as conn:
         row = conn.execute(
             """
-            INSERT INTO app_users (email, password_hash, institution_code)
-            VALUES (%s, %s, %s)
-            RETURNING id, email, password_hash, institution_code, created_at
+            INSERT INTO app_users (email, password_hash, first_name, last_name, institution_code)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id, email, password_hash, first_name, last_name, institution_code, created_at
             """,
-            (email.strip().lower(), password_hash, institution_code),
+            (email.strip().lower(), password_hash, first_name, last_name, institution_code),
         ).fetchone()
     return User(**row)
 
@@ -187,11 +196,41 @@ async def sync_institutions_from_oracle() -> int:
     """Sync institutions from Oracle ST_BS_PARAMETRE table.
     Returns number of institutions synced.
     """
-    # This function would connect to Oracle and sync institutions
-    # For now, we just ensure INTELLIGENTSIA exists
     try:
+        from app.database import get_pool
+        import oracledb
+        
+        # Fetch institutions from Oracle
+        institutions_from_oracle = []
+        try:
+            pool = get_pool()
+            with pool.acquire() as connection:
+                with connection.cursor() as cursor:
+                    # Query ST_BS_PARAMETRE for institution data
+                    cursor.execute(
+                        """
+                        SELECT DISTINCT 
+                            CODE as code,
+                            INTITULE as name
+                        FROM ST_BS_PARAMETRE
+                        WHERE code IS NOT NULL
+                        AND INTITULE IS NOT NULL
+                        """
+                    )
+                    for row in cursor:
+                        institutions_from_oracle.append({
+                            'code': str(row[0]) if row[0] else None,
+                            'name': str(row[1]) if row[1] else None
+                        })
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Could not fetch institutions from Oracle: %s", e)
+        
+        # Sync to PostgreSQL
+        synced_count = 0
         with get_connection() as conn:
-            result = conn.execute(
+            # Ensure INTELLIGENTSIA exists first
+            conn.execute(
                 """
                 INSERT INTO institutions (code, name, is_global, created_at, updated_at)
                 VALUES ('0', 'INTELLIGENTSIA', TRUE, NOW(), NOW())
@@ -201,7 +240,24 @@ async def sync_institutions_from_oracle() -> int:
                     updated_at = NOW()
                 """
             )
-        return 1
+            synced_count += 1
+            
+            # Sync institutions from Oracle
+            for inst in institutions_from_oracle:
+                if inst['code'] and inst['name']:
+                    conn.execute(
+                        """
+                        INSERT INTO institutions (code, name, is_global, created_at, updated_at)
+                        VALUES (%s, %s, FALSE, NOW(), NOW())
+                        ON CONFLICT (code) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            updated_at = NOW()
+                        """,
+                        (inst['code'], inst['name'])
+                    )
+                    synced_count += 1
+        
+        return synced_count
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Institution sync failed: %s", e)

@@ -38,6 +38,7 @@ _COLUMNS = [
     "QUERY_DATE",
     "VERSION",
     "INSTITUTION",
+    "ADRESSE",
     "NBRE_CAS_1",
     "NBRE_CAS_2",
     "NBRE3",
@@ -87,10 +88,22 @@ def _build_fetch_query(table: str) -> str:
     # below; ORDER BY here just guarantees rows arrive pre-sorted per ATM.
     columns_sql = ",\n            ".join(_COLUMNS)
     return f"""
+        WITH filtered_pids AS (
+            SELECT PID
+            FROM {table}
+            WHERE QUERY_DATE >= :window_start
+            GROUP BY PID
+            HAVING 
+                COUNT(CMD_CAS_1) = COUNT(*) AND
+                COUNT(CMD_CAS_2) = COUNT(*) AND
+                COUNT(CMD_CAS_3) = COUNT(*) AND
+                COUNT(CMD_CAS_4) = COUNT(*)
+        )
         SELECT
             {columns_sql}
         FROM {table}
         WHERE QUERY_DATE >= :window_start
+        AND PID IN (SELECT PID FROM filtered_pids)
         ORDER BY PID, QUERY_DATE
     """
 
@@ -130,6 +143,7 @@ def fetch_last_month_data_grouped_by_pid(
                         query_date=row_dict["query_date"],
                         version=row_dict.get("version"),
                         institution=row_dict.get("institution"),
+                        address=row_dict.get("adresse"),
                         nbre_cas_1=row_dict["nbre_cas_1"],
                         nbre_cas_2=row_dict["nbre_cas_2"],
                         nbre3=row_dict["nbre3"],

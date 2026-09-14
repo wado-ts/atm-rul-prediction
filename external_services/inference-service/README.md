@@ -79,3 +79,18 @@ uvicorn app.main:app --reload --port 9002
 Point the main app's `INFERENCE_SERVICE_URL` at
 `http://localhost:9002/predict-rul` once the component predictors are
 implemented and their model files are in place.
+
+## Container image
+
+Build from this directory so the image includes the trained models and their
+configuration artifacts:
+
+```bash
+docker build -t atm-rul-inference:latest .
+docker run --rm -p 9002:9002 atm-rul-inference:latest
+```
+
+The image runs as a non-root user. `/healthz` reports process liveness and
+`/readyz` reports whether every required model and bin-edge bundle loaded.
+Kubernetes should use `/readyz` for readiness; use the `inference` resource in
+`../../../k8s/base/services.yaml`.

@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     start_scheduler()
     # Sync institutions from Oracle on startup
     try:
-        sync_institutions_from_oracle()
+        await sync_institutions_from_oracle()
     except Exception as e:
         logging.getLogger(__name__).warning("Institution sync failed: %s", e)
     logger.info("%s started", get_settings().app_name)
@@ -152,6 +152,7 @@ async def dashboard(
             "daily_run_minute": 0,
             "current_run": current_run,
             "csrf_token": secrets.token_urlsafe(32),
+            "is_global_user": current_user.institution_code == '0' if current_user.institution_code else False,
         },
     )
 

@@ -62,7 +62,7 @@ function fmtRul(days, overdue = false) {
     const wholeDays = Math.floor(totalMinutes / (24 * 60));
     const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
-    return `<div style="color: #dc3545;">${wholeDays} days ${hours} hours ${minutes} minutes</div><span class="badge overdue">OVERDUE</span>`;
+    return `<div style="color: #dc3545;">${wholeDays} jours/days ${hours} heures/hours ${minutes} minutes</div><span class="badge overdue">OVERDUE</span>`;
   }
 
   const totalMinutes = Math.max(0, Math.round(days * 24 * 60));
@@ -70,7 +70,7 @@ function fmtRul(days, overdue = false) {
   const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
   const minutes = totalMinutes % 60;
 
-  return `${wholeDays} days ${hours} hours ${minutes} minutes`;
+  return `${wholeDays} jours/days ${hours} heures/hours ${minutes} minutes`;
 }
 
 function riskLabel(level) {
@@ -188,10 +188,15 @@ function renderTable(predictions) {
 
     const summaryRow = document.createElement("tr");
     summaryRow.className = "atm-row";
+    
+    const institutionDisplay = atm.institution_name 
+      ? `${atm.institution_name} (${atm.institution_code})` 
+      : (atm.institution_code || "—");
+    
     summaryRow.innerHTML = `
       <td class="chevron-cell"><span class="chevron">&#9662;</span></td>
       <td class="pid-cell">${atm.pid}</td>
-      <td>${atm.institution_name ? `${atm.institution_name} (${atm.institution_code})` : (atm.institution_code || "—")}</td>
+      <td>${institutionDisplay}</td>
       <td>${atm.address || "—"}</td>
       <td><span class="badge ${atm.overall_risk}">${riskLabel(atm.overall_risk)}</span></td>
       <td>${atm.weakest_component_id || "—"}</td>
@@ -348,39 +353,6 @@ async function triggerRun() {
 // Event Listeners Registration
 if (runNowBtn) runNowBtn.addEventListener("click", triggerRun);
 if (emptyRunBtn) emptyRunBtn.addEventListener("click", triggerRun);
-
-// Search Expand/Collapse
-function initSearchExpand() {
-  if (!searchInput || !searchWrapper) return;
-  
-  searchInput.addEventListener('focus', () => {
-    searchInput.classList.remove('collapsed');
-    searchInput.classList.add('expanded');
-    const expandedPlaceholder = searchInput.dataset.expandedPlaceholder || 'Search ATM by PID, name, address, institution...';
-    searchInput.placeholder = expandedPlaceholder;
-  });
-  
-  searchInput.addEventListener('blur', () => {
-    if (!searchInput.value.trim()) {
-      searchInput.classList.remove('expanded');
-      searchInput.classList.add('collapsed');
-      const collapsedPlaceholder = searchInput.dataset.collapsedPlaceholder || 'Search by ATM name...';
-      searchInput.placeholder = collapsedPlaceholder;
-    }
-  });
-  
-  searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      searchInput.blur();
-      if (!searchInput.value.trim()) {
-        searchInput.classList.remove('expanded');
-        searchInput.classList.add('collapsed');
-        const collapsedPlaceholder = searchInput.dataset.collapsedPlaceholder || 'Search by ATM name...';
-        searchInput.placeholder = collapsedPlaceholder;
-      }
-    }
-  });
-}
 
 // Update active filter tags UI
 function updateActiveFilters() {
@@ -557,7 +529,6 @@ document.querySelectorAll('.stat-card').forEach(card => {
 });
 
 // Initialize new features
-initSearchExpand();
 initFilterTagRemoval();
 updateActiveFilters();
 

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: atm-rul-config
+  namespace: atm-rul
+data:
+  APP_NAME: ATM Predictive Maintenance
+  ENVIRONMENT: production
+  DATA_SOURCE: oracle
+  ORACLE_SOURCE_TABLE: ST_MN_ATM_DETAIL
+  LOOKBACK_DAYS: "60"
+  SEQUENCE_BUILDER_URL: http://sequence-builder:9001/build-sequences
+  INFERENCE_SERVICE_URL: http://inference:9002/predict-rul
+  SEQUENCE_BUILDER_TIMEOUT_SECONDS: "60"
+  INFERENCE_SERVICE_TIMEOUT_SECONDS: "60"
+  DAILY_RUN_HOUR: "0"
+  DAILY_RUN_MINUTE: "0"
+  INSTITUTION_SYNC_ENABLED: "true"

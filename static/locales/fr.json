@@ -69,6 +69,8 @@
     "login": "Connexion",
     "logout": "Déconnexion",
     "register": "Inscription",
+    "first_name": "Prénom",
+    "last_name": "Nom",
     "email": "Email",
     "password": "Mot de passe",
     "submit": "Se connecter",

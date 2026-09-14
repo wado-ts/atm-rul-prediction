@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 .env
+k8s/base/secret.local.yaml
 
 data/*
 keys/*

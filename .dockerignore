@@ -1,0 +1,13 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+.env
+data
+keys
+notebooks
+reports
+sweep_output
+external_services
+*.ipynb
