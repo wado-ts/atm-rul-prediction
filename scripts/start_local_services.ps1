@@ -15,17 +15,34 @@ $Processes = @()
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 
 function Find-SystemPython {
+    $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+    if ($pyLauncher) {
+        foreach ($version in @('-3.13', '-3.12', '-3.11')) {
+            $pythonPath = & $pyLauncher.Source $version -c "import sys; print(sys.executable)" 2>$null
+            if ($LASTEXITCODE -eq 0 -and $pythonPath) {
+                return ($pythonPath | Select-Object -Last 1).Trim()
+            }
+        }
+    }
+
     $python = Get-Command python -ErrorAction SilentlyContinue
-    if ($python) {
-        return $python.Source
+    foreach ($candidate in @($python, (Get-Command python3 -ErrorAction SilentlyContinue))) {
+        if ($candidate) {
+            $version = & $candidate.Source -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
+            if ($version -match '^3\.(11|12|13)$') {
+                return $candidate.Source
+            }
+        }
     }
 
-    $python3 = Get-Command python3 -ErrorAction SilentlyContinue
-    if ($python3) {
-        return $python3.Source
-    }
+    throw "Python 3.11, 3.12, or 3.13 was not found. Install a supported Python version."
+}
 
-    throw "Python was not found. Create a service .venv or install Python 3.11+."
+function Assert-SupportedPython([string]$Python, [string]$ServiceName) {
+    $version = & $Python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
+    if ($version -notmatch '^3\.(11|12|13)$') {
+        throw "$ServiceName uses Python $version. Delete its .venv and rerun this launcher with Python 3.11, 3.12, or 3.13."
+    }
 }
 
 function Ensure-Environment([string]$ServiceDir, [string]$ServiceName) {
@@ -47,12 +64,16 @@ function Ensure-Environment([string]$ServiceDir, [string]$ServiceName) {
         }
     }
 
+    Assert-SupportedPython $python $ServiceName
+
     $requirements = Join-Path $ServiceDir 'requirements.txt'
     if (-not (Test-Path -LiteralPath $requirements -PathType Leaf)) {
         throw "Requirements file not found for ${ServiceName}: $requirements"
     }
 
     Write-Host "Installing or verifying $ServiceName Python packages..."
+    & $python -m pip install --upgrade pip setuptools wheel --disable-pip-version-check | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "Could not update packaging tools for $ServiceName." }
     & $python -m pip install --disable-pip-version-check -r $requirements | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Could not install packages for $ServiceName." }
     return $python

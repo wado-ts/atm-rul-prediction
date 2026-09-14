@@ -12,14 +12,30 @@ POLL_INTERVAL_SECONDS="${LOCAL_SERVICE_POLL_INTERVAL_SECONDS:-2}"
 mkdir -p "$LOG_DIR"
 
 find_system_python() {
-    if command -v python >/dev/null 2>&1; then
-        command -v python
-    elif command -v python3 >/dev/null 2>&1; then
-        command -v python3
-    else
-        echo "Python was not found. Install Python 3.11+ before starting services." >&2
-        exit 1
+    if command -v py >/dev/null 2>&1; then
+        for version in -3.13 -3.12 -3.11; do
+            local python_path
+            python_path="$(py "$version" -c 'import sys; print(sys.executable)' 2>/dev/null || true)"
+            if [[ -n "$python_path" && -x "$python_path" ]]; then
+                printf '%s\n' "$python_path"
+                return
+            fi
+        done
     fi
+
+    for command_name in python python3; do
+        if command -v "$command_name" >/dev/null 2>&1; then
+            local python_bin
+            python_bin="$(command -v "$command_name")"
+            if "$python_bin" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] in ((3, 11), (3, 12), (3, 13)) else 1)' 2>/dev/null; then
+                printf '%s\n' "$python_bin"
+                return
+            fi
+        fi
+    done
+
+    echo "Python 3.11, 3.12, or 3.13 was not found. Install a supported Python version." >&2
+    exit 1
 }
 
 ensure_env() {
@@ -54,6 +70,7 @@ ensure_env() {
     fi
 
     echo "Installing or verifying $service_name Python packages..."
+    "$python_bin" -m pip install --upgrade pip setuptools wheel --disable-pip-version-check >&2
     "$python_bin" -m pip install --disable-pip-version-check -r "$service_dir/requirements.txt" >&2
     printf '%s\n' "$python_bin"
 }

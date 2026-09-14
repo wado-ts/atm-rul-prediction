@@ -165,6 +165,14 @@ Both launchers use each service's local `.venv` when available and do not
 If a service `.venv` does not exist, the launcher creates it and installs that
 service's `requirements.txt`. It also verifies the requirements on each run,
 so the first start may take several minutes, especially for PyTorch.
+The launchers support Python 3.11, 3.12, and 3.13. The inference service does
+not install `lifelines` because it is unused by the runtime; removing it avoids
+the `autograd-gamma` wheel failure on Python 3.13. The offline analysis code
+may still use `lifelines` separately.
+The launchers require Python 3.11 because the inference dependency set can
+fail to build on Python 3.13, notably while installing `autograd-gamma`. If an
+existing service environment uses another Python version, delete that service's
+`.venv` and rerun the launcher with Python 3.11 installed.
 
 Optional environment variables:
 
