@@ -137,6 +137,39 @@ URLs in `.env` before expecting a successful run — with placeholders,
 clicking "Run prediction now" will fail at whichever step isn't reachable,
 and the dashboard surfaces that error directly rather than failing silently.
 
+### Start all local services
+
+When Docker and Kubernetes are not available, use the dependency-ordered
+launcher:
+
+```bash
+cd src/atm-rul-app
+bash scripts/start_local_services.sh
+```
+
+On Windows PowerShell, use the native launcher:
+
+```powershell
+Set-Location src/atm-rul-app
+.\scripts\start_local_services.ps1
+```
+
+It starts the sequence builder on port `9001`, waits for `/healthz`, starts
+the inference service on port `9002`, waits for model readiness at `/readyz`,
+and then starts the main app on port `8000`. Each service runs from its own
+directory so its `.env` file and relative artifacts are resolved correctly.
+
+Logs are written to `scripts/logs/`. Press `Ctrl+C` to stop all services.
+Both launchers use each service's local `.venv` when available and do not
+ use Uvicorn reload mode, preventing duplicate scheduler processes.
+
+Optional environment variables:
+
+```bash
+LOCAL_SERVICE_STARTUP_TIMEOUT_SECONDS=180 bash scripts/start_local_services.sh
+LOCAL_SERVICE_POLL_INTERVAL_SECONDS=3 bash scripts/start_local_services.sh
+```
+
 ## Container deployment
 
 Build the three service images from `src/atm-rul-app`:
