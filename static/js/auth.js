@@ -10,13 +10,15 @@
   const views = {
     login: document.getElementById('login-view'),
     register: document.getElementById('register-view'),
-    forgot: document.getElementById('forgot-view')
+    forgot: document.getElementById('forgot-view'),
+    reset: document.getElementById('reset-view')
   };
 
   const forms = {
     login: document.querySelector('[data-form="login"]'),
     register: document.querySelector('[data-form="register"]'),
-    forgot: document.querySelector('[data-form="forgot"]')
+    forgot: document.querySelector('[data-form="forgot"]'),
+    reset: document.querySelector('[data-form="reset"]')
   };
 
   // View Switching
@@ -39,6 +41,8 @@
       url.pathname = '/auth/register';
     } else if (viewName === 'forgot') {
       url.pathname = '/auth/forgot-password';
+    } else if (viewName === 'reset') {
+      url.pathname = '/auth/reset-password';
     }
     window.history.replaceState({}, '', url);
   }
@@ -50,6 +54,8 @@
       switchView('register');
     } else if (path.includes('/forgot')) {
       switchView('forgot');
+    } else if (path.includes('/reset-password')) {
+      switchView('reset');
     } else {
       switchView('login');
     }
@@ -237,6 +243,20 @@
         if (btn) {
           btn.classList.add('loading');
         }
+      });
+    }
+
+    if (forms.reset) {
+      forms.reset.addEventListener('submit', function(e) {
+        const password = document.getElementById('reset-password');
+        const confirm = document.getElementById('reset-confirm');
+        if (password.value.length < 8 || password.value !== confirm.value) {
+          e.preventDefault();
+          confirm.setCustomValidity('Passwords must match and be at least 8 characters.');
+          confirm.reportValidity();
+          return;
+        }
+        confirm.setCustomValidity('');
       });
     }
   }

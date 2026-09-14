@@ -63,7 +63,7 @@ class I18nClient {
 
         // Simple interpolation
         if (typeof value === 'string') {
-            return value.replace(/\{\{(\w+)\}\}/g, (match, key) => params[key] || match);
+            return value.replace(/\{\{(\w+)\}\}/g, (match, key) => params[key] ?? match);
         }
         return value;
     }

@@ -60,6 +60,12 @@
     "overallRisk": "Risque global",
     "weakestComponent": "Composant le plus faible",
     "rul": "DVU",
+    "rulDisplay": {
+      "days": "jours",
+      "hours": "heures",
+      "minutes": "minutes",
+      "overdue": "DÉPASSÉE"
+    },
     "prev": "Précédent",
     "pageOf": "Page {page} sur {total}",
     "next": "Suivant"
@@ -98,7 +104,10 @@
     "enter_email_reset": "Entrez votre email pour recevoir les instructions de réinitialisation",
     "send_reset_link": "Envoyer le lien de réinitialisation",
     "remember_password": "Vous vous souvenez de votre mot de passe ?",
-    "password_strength": "Force du mot de passe"
+    "password_strength": "Force du mot de passe",
+    "set_new_password": "Définir un nouveau mot de passe",
+    "enter_new_password": "Choisissez un nouveau mot de passe pour votre compte",
+    "update_password": "Mettre à jour le mot de passe"
   },
   "components": {
     "cmd_cas_1": "Cassette 1",

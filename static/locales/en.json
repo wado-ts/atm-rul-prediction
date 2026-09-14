@@ -60,6 +60,12 @@
     "overallRisk": "Overall risk",
     "weakestComponent": "Weakest component",
     "rul": "RUL",
+    "rulDisplay": {
+      "days": "days",
+      "hours": "hours",
+      "minutes": "minutes",
+      "overdue": "OVERDUE"
+    },
     "prev": "Prev",
     "pageOf": "Page {page} of {total}",
     "next": "Next"
@@ -98,7 +104,10 @@
     "enter_email_reset": "Enter your email to receive reset instructions",
     "send_reset_link": "Send reset link",
     "remember_password": "Remember your password?",
-    "password_strength": "Password strength"
+    "password_strength": "Password strength",
+    "set_new_password": "Set new password",
+    "enter_new_password": "Choose a new password for your account",
+    "update_password": "Update password"
   },
   "components": {
     "cmd_cas_1": "Cassette 1",

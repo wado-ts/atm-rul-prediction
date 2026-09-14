@@ -56,13 +56,22 @@ function fmtDate(iso) {
 
 function fmtRul(days, overdue = false) {
   if (days == null) return "—";
+
+  const translate = (key, fallback) => {
+    const value = window.t ? window.t(`dashboard.rulDisplay.${key}`) : key;
+    return value === `dashboard.rulDisplay.${key}` ? fallback : value;
+  };
+  const dayLabel = translate("days", "days");
+  const hourLabel = translate("hours", "hours");
+  const minuteLabel = translate("minutes", "minutes");
+  const overdueLabel = translate("overdue", "OVERDUE");
   
   if (overdue) {
     const totalMinutes = Math.max(0, Math.round(-days * 24 * 60));
     const wholeDays = Math.floor(totalMinutes / (24 * 60));
     const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
-    return `<div style="color: #dc3545;">${wholeDays} jours/days ${hours} heures/hours ${minutes} minutes</div><span class="badge overdue">OVERDUE</span>`;
+    return `<div style="color: #dc3545;">${wholeDays} ${dayLabel} ${hours} ${hourLabel} ${minutes} ${minuteLabel}</div><span class="badge overdue">${overdueLabel}</span>`;
   }
 
   const totalMinutes = Math.max(0, Math.round(days * 24 * 60));
@@ -70,7 +79,7 @@ function fmtRul(days, overdue = false) {
   const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
   const minutes = totalMinutes % 60;
 
-  return `${wholeDays} jours/days ${hours} heures/hours ${minutes} minutes`;
+  return `${wholeDays} ${dayLabel} ${hours} ${hourLabel} ${minutes} ${minuteLabel}`;
 }
 
 function riskLabel(level) {

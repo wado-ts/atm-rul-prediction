@@ -213,6 +213,9 @@ The Kubernetes ConfigMap is aligned with the production `.env` for
 `ORACLE_SOURCE_TABLE`, `LOOKBACK_DAYS`, and the in-cluster service URLs.
 Populate `POSTGRES_DSN` with a PostgreSQL hostname reachable from the cluster;
 do not use `localhost` unless PostgreSQL runs in the same container.
+Set `PASSWORD_RESET_BASE_URL` to the public HTTPS URL of the deployed app.
+The current local implementation logs generated reset links; connect the route
+to an email provider before enabling password reset in production.
 
 Push the images to a private registry and update the image names in
 `k8s/base/services.yaml` or use a Kustomize overlay. The main app is pinned to

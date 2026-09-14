@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 import secrets
 import hmac
@@ -17,7 +18,15 @@ from app.auth import (
     get_current_user_optional,
     get_current_user,
 )
-from app.auth_db import User, create_user, get_user_by_email, user_count, get_institutions
+from app.auth_db import (
+    User,
+    create_password_reset_token,
+    create_user,
+    get_user_by_email,
+    get_institutions,
+    reset_password_with_token,
+    user_count,
+)
 from app.config import get_settings
 
 router = APIRouter(tags=["auth"])
@@ -216,6 +225,7 @@ async def forgot_password_page(request: Request) -> HTMLResponse:
             "request": request,
             "csrf_token": csrf_token,
             "app_name": get_settings().app_name,
+            "notice": None,
         }
     )
 
@@ -241,16 +251,23 @@ async def forgot_password(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
     
-    # Check if user exists
+    # Always return the same response to avoid revealing whether an account exists.
     user = get_user_by_email(email)
-    
-    # Always show success message to prevent email enumeration
-    # In production, send actual password reset email here
+    reset_url = None
+    if user is not None:
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=get_settings().password_reset_expiration_minutes
+        )
+        create_password_reset_token(user.id, token, expires_at)
+        reset_url = f"{get_settings().password_reset_base_url.rstrip('/')}/auth/reset-password?token={token}"
+        # Replace this log with a mail provider integration in production.
+        import logging
+        logging.getLogger(__name__).info("Password reset link generated for %s: %s", email, reset_url)
+
     new_csrf = secrets.token_urlsafe(32)
     request.session["csrf_token"] = new_csrf
-    
-    message = "If an account exists with this email, you will receive password reset instructions."
-    
+
     return templates.TemplateResponse(
         request,
         "auth.html",
@@ -258,8 +275,59 @@ async def forgot_password(
             "request": request,
             "csrf_token": new_csrf,
             "app_name": get_settings().app_name,
+            "notice": "If an account exists with this email, you will receive password reset instructions.",
+            "reset_url": reset_url,
         },
     )
+
+
+@router.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request, token: str) -> HTMLResponse:
+    csrf_token = secrets.token_urlsafe(32)
+    request.session["csrf_token"] = csrf_token
+    return templates.TemplateResponse(
+        request,
+        "auth.html",
+        {
+            "request": request,
+            "csrf_token": csrf_token,
+            "app_name": get_settings().app_name,
+            "reset_token": token,
+            "reset_view": True,
+        },
+    )
+
+
+@router.post("/reset-password", response_model=None)
+async def reset_password(
+    request: Request,
+    token: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    confirm_password: Annotated[str, Form()],
+    csrf_token: Annotated[str, Form()],
+) -> RedirectResponse | HTMLResponse:
+    if not hmac.compare_digest(csrf_token, request.session.get("csrf_token", "")):
+        return templates.TemplateResponse(
+            request,
+            "auth.html",
+            {"request": request, "error": "Invalid CSRF token. Please refresh and try again.", "csrf_token": request.session.get("csrf_token", ""), "app_name": get_settings().app_name, "reset_view": True, "reset_token": token},
+            status_code=400,
+        )
+    if len(password) < 8 or password != confirm_password:
+        return templates.TemplateResponse(
+            request,
+            "auth.html",
+            {"request": request, "error": "Password must be at least 8 characters and match confirmation.", "csrf_token": request.session.get("csrf_token", ""), "app_name": get_settings().app_name, "reset_view": True, "reset_token": token},
+            status_code=400,
+        )
+    if not reset_password_with_token(token, hash_password(password)):
+        return templates.TemplateResponse(
+            request,
+            "auth.html",
+            {"request": request, "error": "This reset link is invalid or expired.", "csrf_token": request.session.get("csrf_token", ""), "app_name": get_settings().app_name, "reset_view": True, "reset_token": token},
+            status_code=400,
+        )
+    return RedirectResponse("/auth/login?reset=success", status_code=303)
 
 
 @router.post("/logout")

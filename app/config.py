@@ -72,6 +72,8 @@ class Settings(BaseSettings):
     jwt_algorithm: Literal["RS256", "HS256"] = "HS256"
     jwt_expiration_minutes: int = 60
     jwt_refresh_expiration_days: int = 30
+    password_reset_expiration_minutes: int = 30
+    password_reset_base_url: str = "http://localhost:8000"
     jwt_private_key_path: Optional[str] = None
     jwt_public_key_path: Optional[str] = None
 

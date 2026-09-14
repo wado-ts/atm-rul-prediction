@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from datetime import timezone
+import hashlib
 from pathlib import Path
 
 import psycopg
@@ -27,6 +29,10 @@ class User:
     first_name: str | None = None
     last_name: str | None = None
     institution_code: str | None = None
+
+
+def _hash_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
     
 
 
@@ -103,6 +109,19 @@ def init_auth_db() -> None:
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                token_hash TEXT PRIMARY KEY,
+                user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+                expires_at TIMESTAMPTZ NOT NULL,
+                used_at TIMESTAMPTZ
+            )
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS password_reset_tokens_user_idx ON password_reset_tokens(user_id)"
+        )
         # Ensure INTELLIGENTSIA institution exists (code '0', global access)
         conn.execute(
             """
@@ -146,6 +165,50 @@ def get_user_by_id(user_id: int) -> User | None:
             (user_id,),
         ).fetchone()
     return User(**row) if row else None
+
+
+def create_password_reset_token(user_id: int, token: str, expires_at: datetime) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            "DELETE FROM password_reset_tokens WHERE user_id = %s OR expires_at <= NOW()",
+            (user_id,),
+        )
+        conn.execute(
+            """
+            INSERT INTO password_reset_tokens (token_hash, user_id, expires_at)
+            VALUES (%s, %s, %s)
+            """,
+            (_hash_reset_token(token), user_id, expires_at),
+        )
+
+
+def reset_password_with_token(token: str, password_hash: str) -> bool:
+    token_hash = _hash_reset_token(token)
+    now = datetime.now(timezone.utc)
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            UPDATE app_users
+            SET password_hash = %s
+            WHERE id = (
+                SELECT user_id
+                FROM password_reset_tokens
+                WHERE token_hash = %s
+                  AND used_at IS NULL
+                  AND expires_at > %s
+                FOR UPDATE
+            )
+            RETURNING id
+            """,
+            (password_hash, token_hash, now),
+        ).fetchone()
+        if not row:
+            return False
+        conn.execute(
+            "UPDATE password_reset_tokens SET used_at = %s WHERE token_hash = %s",
+            (now, token_hash),
+        )
+    return True
 
 
 def create_user(
